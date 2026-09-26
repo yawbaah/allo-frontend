@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Globe, ArrowRightLeft, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { apiRequest } from '../../lib/api';
 import { useTranslation } from '../../lib/i18n';
 import { getUser } from '../../lib/auth';
@@ -22,11 +22,9 @@ type Conversation = {
   messages?: Message[];
 };
 
-// Rich Markdown parser that converts image links to rendered <img> elements
 function renderFormattedMessage(text: string) {
   if (!text) return null;
 
-  // Split by markdown image syntax: ![alt](url)
   const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
@@ -36,14 +34,12 @@ function renderFormattedMessage(text: string) {
     const [fullMatch, alt, src] = match;
     const matchIndex = match.index;
 
-    // Text before the image
     if (matchIndex > lastIndex) {
       parts.push(
         <span key={`text-${lastIndex}`}>{text.substring(lastIndex, matchIndex)}</span>
       );
     }
 
-    // Rendered image element
     parts.push(
       <div key={`img-${matchIndex}`} style={{ marginTop: '8px', marginBottom: '8px' }}>
         <img
@@ -68,7 +64,6 @@ function renderFormattedMessage(text: string) {
     lastIndex = matchIndex + fullMatch.length;
   }
 
-  // Remaining text after last image
   if (lastIndex < text.length) {
     parts.push(<span key={`text-${lastIndex}`}>{text.substring(lastIndex)}</span>);
   }
@@ -150,7 +145,10 @@ export default function Inbox() {
     const currentUser = getUser();
     if (!currentUser || !currentUser.company_id) return;
 
-    const wsUrl = `ws://localhost:8000/ws/dash/company/${currentUser.company_id}/`;
+    // Use WebSocket scheme and host dynamically
+    const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsBase = import.meta.env.VITE_WS_URL || `${wsProto}//localhost:8000`;
+    const wsUrl = `${wsBase}/ws/dash/company/${currentUser.company_id}/`;
     const dashSocket = new WebSocket(wsUrl);
 
     dashSocket.onmessage = (e) => {
@@ -181,15 +179,11 @@ export default function Inbox() {
   }, []);
 
   useEffect(() => {
-    if (activeId) {
-      fetchThreadDetails(activeId);
-    }
-  }, [activeId]);
-
-  useEffect(() => {
     if (!activeId) return;
 
-    const chatSocket = new WebSocket(`ws://localhost:8000/ws/chat/conversation/${activeId}/`);
+    const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsBase = import.meta.env.VITE_WS_URL || `${wsProto}//localhost:8000`;
+    const chatSocket = new WebSocket(`${wsBase}/ws/chat/conversation/${activeId}/`);
 
     chatSocket.onmessage = (e) => {
       const data = JSON.parse(e.data);
@@ -357,7 +351,6 @@ export default function Inbox() {
                     const isAgent = m.sender_role === 'agent';
                     return (
                       <div key={m.id} className={`msg ${m.sender_role === 'user' ? 'msg-user' : isAgent ? 'msg-agent' : 'msg-ai'}`}>
-                        {/* Renders images dynamically in the Inbox message log */}
                         <div style={{ fontSize: '0.9rem', lineHeight: 1.5 }}>
                           {renderFormattedMessage(m.content)}
                         </div>

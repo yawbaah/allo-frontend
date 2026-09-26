@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Upload, MessageSquare, X, Copy, Check, Lock, Sparkles } from 'lucide-react';
+import { Upload, MessageSquare, X, Copy, Check, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { apiRequest } from '../../lib/api';
 import { useTranslation } from '../../lib/i18n';
@@ -63,12 +63,9 @@ export default function Deploy() {
     setSaveMessage('');
 
     try {
-      // 1. If a new logo file is selected, upload it as FormData
       if (selectedFile) {
         const fileData = new FormData();
         fileData.append('logo_file', selectedFile);
-        
-        // Save text parameters inside the form
         fileData.append('widget_name', widgetName);
         fileData.append('widget_color', color);
         fileData.append('widget_position', position);
@@ -82,7 +79,6 @@ export default function Deploy() {
         setLogoUrl(response.widget_logo_url);
         setSelectedFile(null);
       } else {
-        // 2. Otherwise, save standard JSON configuration
         await apiRequest('/companies/me/', {
           method: 'PATCH',
           body: JSON.stringify({
@@ -90,7 +86,7 @@ export default function Deploy() {
             widget_color: color,
             widget_position: position,
             widget_launcher: launcherStyle,
-            widget_logo_url: logoUrl, // Keeps existing logo URL
+            widget_logo_url: logoUrl,
             widget_welcome_msg: welcome,
           }),
         });
@@ -105,7 +101,6 @@ export default function Deploy() {
     }
   };
 
-  // DYNAMIC SCRIPT CONFIGURATION: Swaps localhost dynamically for your production domains
   const currentHost = window.location.origin;
   const snippet = `<script
   src="${currentHost}/widget.js"
@@ -128,7 +123,7 @@ export default function Deploy() {
     const file = e.target.files?.[0];
     if (file) {
       setSelectedFile(file);
-      setLogoUrl(URL.createObjectURL(file)); // Show preview instantly
+      setLogoUrl(URL.createObjectURL(file));
       if (launcherStyle === 'icon') setLauncherStyle('logo-circle');
     }
   };

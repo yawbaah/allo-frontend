@@ -1,11 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { apiRequest } from '../lib/api';
-import { useTranslation } from '../lib/i18n';
 import LangSelect from '../components/LangSelect';
 
 export default function ForgotPassword() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,7 +19,6 @@ export default function ForgotPassword() {
         method: 'POST',
         body: JSON.stringify({ email }),
       });
-      // Redirect to Reset Password page passing the email state
       navigate('/reset-password', { state: { email } });
     } catch (err: any) {
       setError(err.message);
