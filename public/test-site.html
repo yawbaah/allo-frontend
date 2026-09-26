@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acme Corp - Customer Test Site</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background-color: #0f0f11;
+      color: #ffffff;
+      margin: 0;
+      padding: 60px 40px;
+    }
+    h1 { color: #ffffff; font-size: 2.5rem; margin-bottom: 1rem; }
+    p { font-size: 1.1rem; max-width: 600px; line-height: 1.6; color: #a1a1aa; }
+    button { background: #ffffff; color: #000000; padding: 12px 24px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+  </style>
+</head>
+<body>
+
+  <h1>Acme Corp Ecommerce</h1>
+  <p>This is a test external website demonstrating the Allo embeddable widget.</p>
+
+  <button>Host site button</button>
+
+  <p style="margin-top: 40px; font-size: 0.9rem; color: #71717a;">
+    Notice how the host site's custom CSS does <strong>not</strong> break the Allo chat widget in the bottom right corner!
+  </p>
+
+  <!-- YOUR LIVE ALLO EMBED SNIPPET -->
+  <script 
+    src="/widget.js" 
+    data-company-id="f0cf446c-3281-499d-8f09-d7cac11b15b8"
+    async
+  ></script>
+
+</body>
+</html>
