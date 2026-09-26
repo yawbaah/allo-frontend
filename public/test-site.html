@@ -3,35 +3,71 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Acme Corp - Customer Test Site</title>
+  <title>Allo Widget Local Sandbox Integration</title>
   <style>
     body {
-      font-family: system-ui, -apple-system, sans-serif;
-      background-color: #0f0f11;
+      background-color: #0b0b0f;
       color: #ffffff;
+      font-family: system-ui, -apple-system, sans-serif;
       margin: 0;
-      padding: 60px 40px;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 80vh;
     }
-    h1 { color: #ffffff; font-size: 2.5rem; margin-bottom: 1rem; }
-    p { font-size: 1.1rem; max-width: 600px; line-height: 1.6; color: #a1a1aa; }
-    button { background: #ffffff; color: #000000; padding: 12px 24px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+    .card {
+      background: #12121a;
+      border: 1px solid #27273a;
+      border-radius: 12px;
+      padding: 32px;
+      max-width: 600px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+    h1 {
+      font-size: 2.2rem;
+      margin-bottom: 12px;
+    }
+    p {
+      color: #a1a1aa;
+      font-size: 1.1rem;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .badge {
+      background: #10b981;
+      color: #000;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
 
-  <h1>Acme Corp Ecommerce</h1>
-  <p>This is a test external website demonstrating the Allo embeddable widget.</p>
+  <div class="card">
+    <div style="margin-bottom: 15px;"><span class="badge">SANDBOX RUNNING</span></div>
+    <h1>Allo Live Chat Testing environment</h1>
+    <p>This page loads the widget from your local development stack and communicates with Daphne via port 8000.</p>
+  </div>
 
-  <button>Host site button</button>
-
-  <p style="margin-top: 40px; font-size: 0.9rem; color: #71717a;">
-    Notice how the host site's custom CSS does <strong>not</strong> break the Allo chat widget in the bottom right corner!
-  </p>
-
-  <!-- YOUR LIVE ALLO EMBED SNIPPET -->
-  <script 
-    src="/widget.js" 
-    data-company-id="f0cf446c-3281-499d-8f09-d7cac11b15b8"
+  <!-- 
+    ======================================================================
+    ALLO CHATBOT EMBED WIDGET CODE
+    ======================================================================
+    - Replace `YOUR-COMPANY-UUID` with your company ID from the Deploy page
+    - Make sure Daphne is running locally on port 8000
+  -->
+  <script
+    src="http://localhost:5173/widget.js"
+    data-company-id="YOUR-COMPANY-UUID-HERE"
+    data-name="Allo Support"
+    data-color="#10b981"
+    data-position="right"
+    data-launcher="icon"
     async
   ></script>
 

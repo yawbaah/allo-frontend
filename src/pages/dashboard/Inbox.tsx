@@ -22,6 +22,60 @@ type Conversation = {
   messages?: Message[];
 };
 
+// Rich Markdown parser that converts image links to rendered <img> elements
+function renderFormattedMessage(text: string) {
+  if (!text) return null;
+
+  // Split by markdown image syntax: ![alt](url)
+  const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = imageRegex.exec(text)) !== null) {
+    const [fullMatch, alt, src] = match;
+    const matchIndex = match.index;
+
+    // Text before the image
+    if (matchIndex > lastIndex) {
+      parts.push(
+        <span key={`text-${lastIndex}`}>{text.substring(lastIndex, matchIndex)}</span>
+      );
+    }
+
+    // Rendered image element
+    parts.push(
+      <div key={`img-${matchIndex}`} style={{ marginTop: '8px', marginBottom: '8px' }}>
+        <img
+          src={src}
+          alt={alt || 'Uploaded visual'}
+          style={{
+            maxWidth: '100%',
+            maxHeight: '220px',
+            borderRadius: '6px',
+            border: '1px solid var(--border-color)',
+            display: 'block',
+            objectFit: 'contain',
+            background: '#111',
+          }}
+          onError={(e) => {
+            (e.target as HTMLImageElement).style.display = 'none';
+          }}
+        />
+      </div>
+    );
+
+    lastIndex = matchIndex + fullMatch.length;
+  }
+
+  // Remaining text after last image
+  if (lastIndex < text.length) {
+    parts.push(<span key={`text-${lastIndex}`}>{text.substring(lastIndex)}</span>);
+  }
+
+  return parts.length > 0 ? parts : text;
+}
+
 export default function Inbox() {
   const { t } = useTranslation();
   const [threads, setThreads] = useState<Conversation[]>([]);
@@ -34,16 +88,13 @@ export default function Inbox() {
   const [agentLang] = useState('French');
   const [autoTranslate, setAutoTranslate] = useState(false);
 
-  // Refs for tracking active references inside socket event handlers
   const activeIdRef = useRef<string | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
 
-  // Keep ref up to date
   useEffect(() => {
     activeIdRef.current = activeId;
   }, [activeId]);
 
-  // Subtle synth notification tone for human handoffs
   const playAlertSound = () => {
     try {
       if (!audioContextRef.current) {
@@ -54,8 +105,8 @@ export default function Inbox() {
       const gain = ctx.createGain();
 
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15); // A5
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15);
 
       gain.gain.setValueAtTime(0.15, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
@@ -66,7 +117,7 @@ export default function Inbox() {
       osc.start();
       osc.stop(ctx.currentTime + 0.4);
     } catch (e) {
-      console.warn("Could not execute audio alert notification context", e);
+      console.warn('Could not execute audio alert notification context', e);
     }
   };
 
@@ -93,7 +144,6 @@ export default function Inbox() {
     }
   };
 
-  // 1. Establish dashboard-wide company alert socket
   useEffect(() => {
     fetchThreads();
 
@@ -106,7 +156,6 @@ export default function Inbox() {
     dashSocket.onmessage = (e) => {
       const data = JSON.parse(e.data);
       if (data.type === 'handoff_alert') {
-        // Refresh thread sidebar sorting
         setThreads((prevThreads) => {
           const filtered = prevThreads.filter((t) => t.id !== data.conversation_id);
           const updatedThread: Conversation = {
@@ -120,15 +169,10 @@ export default function Inbox() {
           return [updatedThread, ...filtered];
         });
 
-        // Trigger synth sound if alert transitions to "human" handoff
         if (data.status === 'human') {
           playAlertSound();
         }
       }
-    };
-
-    dashSocket.onclose = () => {
-      console.log('Dashboard global alerts channel closed. Reconnecting shortly.');
     };
 
     return () => {
@@ -136,14 +180,12 @@ export default function Inbox() {
     };
   }, []);
 
-  // 2. Fetch full details on active thread switch
   useEffect(() => {
     if (activeId) {
       fetchThreadDetails(activeId);
     }
   }, [activeId]);
 
-  // 3. Establish specific, real-time message stream for the active thread
   useEffect(() => {
     if (!activeId) return;
 
@@ -153,12 +195,8 @@ export default function Inbox() {
       const data = JSON.parse(e.data);
       if (data.type === 'chat_message') {
         const newMsg: Message = data.message;
-        
-        // Append the message to the active conversation context in real-time
         setActiveThread((prev) => {
           if (!prev || prev.id !== activeId) return prev;
-          
-          // Check for duplicate messages
           const exists = prev.messages?.some((m) => m.id === newMsg.id);
           if (exists) return prev;
 
@@ -248,7 +286,6 @@ export default function Inbox() {
         </div>
       ) : (
         <div className="inbox-layout">
-          {/* Sidebar List */}
           <div className="inbox-list">
             {threads.map((tItem) => (
               <div
@@ -284,7 +321,6 @@ export default function Inbox() {
             ))}
           </div>
 
-          {/* Active Chat Window */}
           <div className="inbox-chat">
             {activeThread ? (
               <>
@@ -316,13 +352,15 @@ export default function Inbox() {
                   </div>
                 </div>
 
-                {/* Message Log */}
                 <div className="inbox-messages">
                   {(activeThread.messages || []).map((m) => {
                     const isAgent = m.sender_role === 'agent';
                     return (
                       <div key={m.id} className={`msg ${m.sender_role === 'user' ? 'msg-user' : isAgent ? 'msg-agent' : 'msg-ai'}`}>
-                        <div style={{ fontSize: '0.9rem' }}>{m.content}</div>
+                        {/* Renders images dynamically in the Inbox message log */}
+                        <div style={{ fontSize: '0.9rem', lineHeight: 1.5 }}>
+                          {renderFormattedMessage(m.content)}
+                        </div>
                         <div style={{ fontSize: '0.65rem', marginTop: '0.4rem', opacity: 0.5, textAlign: isAgent ? 'right' : 'left' }}>
                           {m.sender_role === 'ai' ? 'Allo AI' : isAgent ? 'You' : 'Visitor'} · {formatDate(m.created_at)}
                         </div>
@@ -331,7 +369,6 @@ export default function Inbox() {
                   })}
                 </div>
 
-                {/* Reply Form */}
                 <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--border-color)', background: '#0a0a0a' }}>
                   <form style={{ display: 'flex', gap: '0.75rem' }} onSubmit={sendReply}>
                     <input

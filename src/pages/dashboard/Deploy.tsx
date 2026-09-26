@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Upload, MessageSquare, X, Copy, Check, Lock } from 'lucide-react';
+import { Upload, MessageSquare, X, Copy, Check, Lock, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { apiRequest } from '../../lib/api';
 import { useTranslation } from '../../lib/i18n';
@@ -32,6 +32,7 @@ export default function Deploy() {
   const [widgetName, setWidgetName] = useState('Support Team');
   const [launcherStyle, setLauncherStyle] = useState<'icon' | 'logo-circle' | 'logo-square'>('icon');
   const [logoUrl, setLogoUrl] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const [open, setOpen] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -47,7 +48,7 @@ export default function Deploy() {
         setWidgetName(data.widget_name || data.name || 'Support');
         setLauncherStyle(data.widget_launcher || 'icon');
         setLogoUrl(data.widget_logo_url || '');
-        setIsPaid(data.subscription_status === 'active' || data.subscription_status === 'trialing');
+        setIsPaid(data.subscription_status === 'active');
       } catch (err) {
         console.error('Failed to load deploy settings', err);
       } finally {
@@ -60,18 +61,41 @@ export default function Deploy() {
     if (!isPaid) return;
     setSaving(true);
     setSaveMessage('');
+
     try {
-      await apiRequest('/companies/me/', {
-        method: 'PATCH',
-        body: JSON.stringify({
-          widget_name: widgetName,
-          widget_color: color,
-          widget_position: position,
-          widget_launcher: launcherStyle,
-          widget_logo_url: logoUrl,
-          widget_welcome_msg: welcome,
-        }),
-      });
+      // 1. If a new logo file is selected, upload it as FormData
+      if (selectedFile) {
+        const fileData = new FormData();
+        fileData.append('logo_file', selectedFile);
+        
+        // Save text parameters inside the form
+        fileData.append('widget_name', widgetName);
+        fileData.append('widget_color', color);
+        fileData.append('widget_position', position);
+        fileData.append('widget_launcher', launcherStyle);
+        fileData.append('widget_welcome_msg', welcome);
+
+        const response = await apiRequest<Company>('/companies/me/', {
+          method: 'PATCH',
+          body: fileData,
+        });
+        setLogoUrl(response.widget_logo_url);
+        setSelectedFile(null);
+      } else {
+        // 2. Otherwise, save standard JSON configuration
+        await apiRequest('/companies/me/', {
+          method: 'PATCH',
+          body: JSON.stringify({
+            widget_name: widgetName,
+            widget_color: color,
+            widget_position: position,
+            widget_launcher: launcherStyle,
+            widget_logo_url: logoUrl, // Keeps existing logo URL
+            widget_welcome_msg: welcome,
+          }),
+        });
+      }
+
       setSaveMessage('Widget appearance saved!');
       setTimeout(() => setSaveMessage(''), 3000);
     } catch (err) {
@@ -81,8 +105,10 @@ export default function Deploy() {
     }
   };
 
+  // DYNAMIC SCRIPT CONFIGURATION: Swaps localhost dynamically for your production domains
+  const currentHost = window.location.origin;
   const snippet = `<script
-  src="http://localhost:5173/widget.js"
+  src="${currentHost}/widget.js"
   data-company-id="${companyId || 'YOUR_COMPANY_ID'}"
   data-name="${widgetName}"
   data-color="${color}"
@@ -101,7 +127,8 @@ export default function Deploy() {
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setLogoUrl(URL.createObjectURL(file));
+      setSelectedFile(file);
+      setLogoUrl(URL.createObjectURL(file)); // Show preview instantly
       if (launcherStyle === 'icon') setLauncherStyle('logo-circle');
     }
   };
