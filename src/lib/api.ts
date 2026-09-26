@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:8000/api';
+// Dynamically reads Railway VITE_API_URL in production or falls back to localhost in dev
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 export function getAccessToken(): string | null {
   return localStorage.getItem('allo_access_token');
@@ -64,7 +66,6 @@ export async function apiRequest<T>(
 ): Promise<T> {
   const token = getAccessToken();
 
-  // Safely cast headers to a standard string dictionary for type-checking
   const headers: Record<string, string> = {};
 
   if (options.headers) {
@@ -94,7 +95,6 @@ export async function apiRequest<T>(
     headers,
   });
 
-  // If 401 Unauthorized, attempt silent token refresh automatically
   if (response.status === 401 && !headers['X-No-Retry']) {
     if (!isRefreshing) {
       isRefreshing = true;

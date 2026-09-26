@@ -1,7 +1,9 @@
 (function () {
   const scriptTag = document.currentScript || document.querySelector('script[src*="widget.js"]');
-  const API_HOST = 'http://localhost:8000';
-  const WS_HOST = 'ws://localhost:8000';
+  
+  // PRODUCTION BACKEND ENDPOINTS (Default to Railway Production or data-api attribute if provided)
+  const API_HOST = (scriptTag && scriptTag.getAttribute('data-api-host')) || 'https://allo-backend-production.up.railway.app';
+  const WS_HOST = API_HOST.replace('https://', 'wss://').replace('http://', 'ws://');
   
   const companyId = scriptTag ? scriptTag.getAttribute('data-company-id') : 'demo';
 
@@ -50,26 +52,25 @@
 
   const shadow = host.attachShadow({ mode: 'open' });
 
-  // Dynamically initialize WebSocket connection for the active conversation
   function connectWebSocket(id) {
-    if (chatSocket) return;
+    if (chatSocket || !id) return;
 
     chatSocket = new WebSocket(`${WS_HOST}/ws/chat/conversation/${id}/`);
 
     chatSocket.onmessage = (e) => {
-      const data = JSON.parse(e.data);
-      if (data.type === 'chat_message') {
-        const msg = data.message;
-        // Do not render if the message was sent by the visitor (already rendered in UI)
-        if (msg.sender_role !== 'user') {
-          addMessage(msg.content, msg.sender_role);
+      try {
+        const data = JSON.parse(e.data);
+        if (data.type === 'chat_message') {
+          const msg = data.message;
+          if (msg.sender_role !== 'user') {
+            addMessage(msg.content, msg.sender_role);
+          }
         }
-      }
+      } catch (err) {}
     };
 
     chatSocket.onclose = () => {
       chatSocket = null;
-      // Reconnect if the connection is dropped
       setTimeout(() => connectWebSocket(id), 5000);
     };
   }
@@ -78,7 +79,6 @@
     const messagesContainer = shadow.querySelector('#messages');
     if (!messagesContainer) return;
 
-    // Remove any active typing indicators
     const typing = shadow.querySelector('#typing-indicator');
     if (typing) typing.remove();
 
@@ -332,11 +332,9 @@
 
         if (response.ok) {
           conversationId = data.conversation_id;
-          
-          // Connect to WebSocket channel for this conversation
           connectWebSocket(conversationId);
 
-          const aiMsg = data.messages.find(m => m.sender_role === 'ai');
+          const aiMsg = data.messages && data.messages.find(m => m.sender_role === 'ai');
           if (aiMsg) {
             addMessage(aiMsg.content, 'ai');
           }
