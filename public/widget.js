@@ -1,7 +1,6 @@
 (function () {
   console.log('[Allo Widget] Script loaded');
 
-  // Wait for idle time so we don't block page load
   const initWidget = () => {
     const scriptTag = document.currentScript || document.querySelector('script[src*="widget.js"]');
     
@@ -10,12 +9,28 @@
       return;
     }
 
-    const API_HOST = scriptTag.getAttribute('data-api-host') || 'https://allo-backend-production-0fb3.up.railway.app/api';
-    const WS_HOST = API_HOST.replace('https://', 'wss://').replace('http://', 'ws://');
+    const scriptSrc = scriptTag.getAttribute('src') || '';
+    let detectedApiHost = 'https://allo-backend-production-0fb3.up.railway.app/api';
+    
+    if (scriptSrc && scriptSrc.startsWith('http')) {
+      try {
+        const urlObj = new URL(scriptSrc);
+        if (urlObj.port === '5173' || urlObj.hostname === 'localhost' || urlObj.hostname === '127.0.0.1') {
+          detectedApiHost = 'http://localhost:8000/api';
+        } else {
+          detectedApiHost = `${urlObj.origin}/api`;
+        }
+      } catch (e) {}
+    }
+
+    const API_HOST = scriptTag.getAttribute('data-api-host') || detectedApiHost;
+    const API_ROOT = API_HOST.replace(/\/api\/?$/, '');
+    const WS_HOST = API_ROOT.replace(/^https:\/\//, 'wss://').replace(/^http:\/\//, 'ws://');
+    
     const companyId = scriptTag.getAttribute('data-company-id') || 'demo';
 
-    console.log('[Allo Widget] Company ID:', companyId);
-    console.log('[Allo Widget] API Host:', API_HOST);
+    console.log('[Allo Widget] Target API:', API_HOST);
+    console.log('[Allo Widget] Target WS:', WS_HOST);
 
     let config = {
       name: scriptTag.getAttribute('data-name') || 'Allo Support',
@@ -26,7 +41,7 @@
       welcomeMessage: 'Hi! How can we help you today?',
     };
 
-    let conversationId = null;
+    let conversationId = localStorage.getItem(`allo_conv_${companyId}`) || null;
     let chatSocket = null;
     let visitorId = localStorage.getItem('allo_visitor_id');
     if (!visitorId) {
@@ -34,11 +49,7 @@
       localStorage.setItem('allo_visitor_id', visitorId);
     }
 
-    // Prevent double-mounting
-    if (document.getElementById('allo-widget-host')) {
-      console.log('[Allo Widget] Already mounted, skipping');
-      return;
-    }
+    if (document.getElementById('allo-widget-host')) return;
 
     function parseMarkdown(text) {
       if (!text) return '';
@@ -56,32 +67,42 @@
 
     function connectWebSocket(id) {
       if (chatSocket || !id) return;
-      console.log('[Allo Widget] Connecting WebSocket...');
       
-      chatSocket = new WebSocket(`${WS_HOST}/ws/chat/conversation/${id}/`);
+      const wsUrl = `${WS_HOST}/ws/chat/conversation/${id}/`;
+      console.log('[Allo Widget] Connecting WebSocket:', wsUrl);
 
-      chatSocket.onopen = () => console.log('[Allo Widget] WebSocket connected');
-      
-      chatSocket.onmessage = (e) => {
-        try {
-          const data = JSON.parse(e.data);
-          if (data.type === 'chat_message') {
-            const msg = data.message;
-            if (msg.sender_role !== 'user') {
-              addMessage(msg.content, msg.sender_role);
+      try {
+        chatSocket = new WebSocket(wsUrl);
+
+        chatSocket.onopen = () => {
+          console.log('[Allo Widget] ✅ Live WebSocket connected');
+        };
+
+        chatSocket.onmessage = (e) => {
+          try {
+            const data = JSON.parse(e.data);
+            if (data.type === 'chat_message') {
+              const msg = data.message;
+              if (msg.sender_role !== 'user') {
+                addMessage(msg.content, msg.sender_role);
+              }
             }
+          } catch (err) {
+            console.error('[Allo Widget] Parse error:', err);
           }
-        } catch (err) {
-          console.error('[Allo Widget] WebSocket parse error:', err);
-        }
-      };
+        };
 
-      chatSocket.onclose = () => {
-        console.log('[Allo Widget] WebSocket closed');
+        chatSocket.onclose = () => {
+          chatSocket = null;
+          setTimeout(() => connectWebSocket(id), 3000);
+        };
+
+        chatSocket.onerror = (err) => {
+          console.error('[Allo Widget] WS error:', err);
+        };
+      } catch (e) {
         chatSocket = null;
-      };
-
-      chatSocket.onerror = (err) => console.error('[Allo Widget] WebSocket error:', err);
+      }
     }
 
     function addMessage(text, sender) {
@@ -93,7 +114,13 @@
 
       const msg = document.createElement('div');
       msg.className = `msg msg-${sender}`;
-      msg.innerHTML = parseMarkdown(text);
+
+      let headerPrefix = '';
+      if (sender === 'agent') {
+        headerPrefix = '<span class="agent-tag">Live Agent</span>';
+      }
+
+      msg.innerHTML = `${headerPrefix}${parseMarkdown(text)}`;
       messagesContainer.appendChild(msg);
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
@@ -135,8 +162,8 @@
           position: absolute;
           bottom: 75px;
           ${config.position === 'left' ? 'left: 0;' : 'right: 0;'}
-          width: 350px;
-          height: 500px;
+          width: 360px;
+          height: 520px;
           background: #0a0a0a;
           border: 1px solid #27272a;
           border-radius: 12px;
@@ -187,13 +214,30 @@
         .msg-ai {
           align-self: flex-start;
           background: rgba(255, 255, 255, 0.08);
-          color: #a1a1aa;
+          color: #e4e4e7;
           border: 1px solid #27272a;
           border-bottom-left-radius: 2px;
         }
+        .msg-agent {
+          align-self: flex-start;
+          background: #18181b;
+          color: #ffffff;
+          border: 1px solid #3b82f6;
+          border-bottom-left-radius: 2px;
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        }
+        .agent-tag {
+          display: block;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          color: #60a5fa;
+          margin-bottom: 4px;
+        }
         .msg-user {
           align-self: flex-end;
-          background: rgba(255, 255, 255, 0.18);
+          background: rgba(255, 255, 255, 0.2);
           color: #ffffff;
           border-bottom-right-radius: 2px;
         }
@@ -288,6 +332,7 @@
         if (isOpen) {
           chatWindow.classList.add('open');
           chatInput.focus();
+          if (conversationId) connectWebSocket(conversationId);
         } else {
           chatWindow.classList.remove('open');
         }
@@ -333,6 +378,8 @@
 
           if (response.ok) {
             conversationId = data.conversation_id;
+            localStorage.setItem(`allo_conv_${companyId}`, conversationId);
+            
             connectWebSocket(conversationId);
 
             const aiMsg = data.messages && data.messages.find(m => m.sender_role === 'ai');
@@ -352,19 +399,17 @@
           chatInput.focus();
         }
       });
-
-      console.log('[Allo Widget] UI rendered');
     }
 
-    // Render immediately with inline config
     renderUI();
 
-    // Fetch remote config with timeout (won't block if slow)
+    if (conversationId) {
+      connectWebSocket(conversationId);
+    }
+
     if (companyId && companyId.length > 20) {
-      console.log('[Allo Widget] Fetching remote config...');
-      
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000); // 2s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
 
       fetch(`${API_HOST}/chat/widget-config/${companyId}/`, { signal: controller.signal })
         .then((res) => {
@@ -373,7 +418,6 @@
           return res.json();
         })
         .then((data) => {
-          console.log('[Allo Widget] Config loaded:', data);
           if (data.color) config.color = data.color;
           if (data.name) config.name = data.name;
           if (data.position) config.position = data.position;
@@ -382,14 +426,12 @@
           if (data.welcome_message) config.welcomeMessage = data.welcome_message;
           renderUI();
         })
-        .catch((err) => {
+        .catch(() => {
           clearTimeout(timeoutId);
-          console.log('[Allo Widget] Using inline config (remote fetch failed):', err.message);
         });
     }
   };
 
-  // Use requestIdleCallback to avoid blocking page load
   if ('requestIdleCallback' in window) {
     requestIdleCallback(() => initWidget());
   } else {
