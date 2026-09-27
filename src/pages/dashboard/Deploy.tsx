@@ -149,6 +149,8 @@ export default function Deploy() {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '1rem',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -175,24 +177,27 @@ export default function Deploy() {
           </div>
 
           <h2 className="panel-title">{t('dep.embed')}</h2>
-          <div className="code-block" style={{ marginBottom: '2.5rem' }}>
-            <button
-              type="button"
-              className="btn btn-primary copy-btn"
-              onClick={copySnippet}
-              style={{ padding: '0.4rem 0.9rem', fontSize: '0.7rem' }}
-            >
-              {copied ? (
-                <>
-                  <Check size={12} style={{ marginRight: 4 }} /> {t('dep.copied')}
-                </>
-              ) : (
-                <>
-                  <Copy size={12} style={{ marginRight: 4 }} /> {t('dep.copy')}
-                </>
-              )}
-            </button>
-            <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{snippet}</pre>
+          <div className="code-block-wrapper" style={{ marginBottom: '2.5rem' }}>
+            <div className="code-block-header">
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>HTML Embed Code</span>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={copySnippet}
+                style={{ padding: '0.35rem 0.85rem', fontSize: '0.75rem' }}
+              >
+                {copied ? (
+                  <>
+                    <Check size={12} style={{ marginRight: 4 }} /> {t('dep.copied')}
+                  </>
+                ) : (
+                  <>
+                    <Copy size={12} style={{ marginRight: 4 }} /> {t('dep.copy')}
+                  </>
+                )}
+              </button>
+            </div>
+            <pre className="code-block-pre">{snippet}</pre>
           </div>
 
           <h2 className="panel-title">{t('dep.appearance')}</h2>
@@ -204,12 +209,12 @@ export default function Deploy() {
 
           <div className="form-group">
             <label>{t('dep.launcher')}</label>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <div className="launcher-buttons-row">
               <button
                 type="button"
                 onClick={() => setLauncherStyle('icon')}
                 className={`btn ${launcherStyle === 'icon' ? 'btn-primary' : 'btn-ghost'}`}
-                style={{ border: launcherStyle === 'icon' ? 'none' : '1px solid var(--border-color)' }}
+                style={{ border: launcherStyle === 'icon' ? 'none' : '1px solid var(--border-color)', justifyContent: 'center' }}
               >
                 {t('dep.icon')}
               </button>
@@ -217,7 +222,7 @@ export default function Deploy() {
                 type="button"
                 onClick={() => setLauncherStyle('logo-circle')}
                 className={`btn ${launcherStyle === 'logo-circle' ? 'btn-primary' : 'btn-ghost'}`}
-                style={{ border: launcherStyle === 'logo-circle' ? 'none' : '1px solid var(--border-color)' }}
+                style={{ border: launcherStyle === 'logo-circle' ? 'none' : '1px solid var(--border-color)', justifyContent: 'center' }}
               >
                 {t('dep.circle')}
               </button>
@@ -225,7 +230,7 @@ export default function Deploy() {
                 type="button"
                 onClick={() => setLauncherStyle('logo-square')}
                 className={`btn ${launcherStyle === 'logo-square' ? 'btn-primary' : 'btn-ghost'}`}
-                style={{ border: launcherStyle === 'logo-square' ? 'none' : '1px solid var(--border-color)' }}
+                style={{ border: launcherStyle === 'logo-square' ? 'none' : '1px solid var(--border-color)', justifyContent: 'center' }}
               >
                 {t('dep.square')}
               </button>
@@ -235,7 +240,7 @@ export default function Deploy() {
           {launcherStyle !== 'icon' && (
             <div className="form-group">
               <label>{t('dep.logo')}</label>
-              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                 {logoUrl && (
                   <img
                     src={logoUrl}
@@ -246,6 +251,7 @@ export default function Deploy() {
                       objectFit: 'cover',
                       borderRadius: launcherStyle === 'logo-circle' ? '50%' : '8px',
                       border: '1px solid var(--border-color)',
+                      flexShrink: 0,
                     }}
                   />
                 )}
@@ -275,6 +281,7 @@ export default function Deploy() {
                   border: '1px solid var(--border-color)',
                   background: 'transparent',
                   cursor: 'pointer',
+                  borderRadius: 4,
                 }}
               />
               <input
@@ -295,7 +302,7 @@ export default function Deploy() {
             <label>{t('dep.position')}</label>
             <select
               className="form-input"
-              style={{ appearance: 'none', maxWidth: 220 }}
+              style={{ appearance: 'none', maxWidth: '100%' }}
               value={position}
               onChange={(e) => setPosition(e.target.value as 'right' | 'left')}
             >
@@ -306,7 +313,7 @@ export default function Deploy() {
 
           {saveMessage && <p style={{ color: '#86efac', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{saveMessage}</p>}
 
-          <button type="button" className="btn btn-primary" style={{ marginTop: '0.5rem' }} onClick={handleSave} disabled={saving}>
+          <button type="button" className="btn btn-primary deploy-save-btn" onClick={handleSave} disabled={saving}>
             {saving ? 'Saving…' : t('dep.save')}
           </button>
         </div>
@@ -323,9 +330,8 @@ export default function Deploy() {
 
             <button
               type="button"
-              className="widget-bubble"
+              className={`widget-bubble pos-${position}`}
               style={{
-                [position === 'right' ? 'right' : 'left']: '1.25rem',
                 background: open ? color : launcherStyle === 'icon' ? color : 'transparent',
                 color: contrastColor,
                 borderRadius: launcherStyle === 'logo-square' && !open ? '12px' : '50%',
@@ -345,18 +351,18 @@ export default function Deploy() {
             </button>
 
             {open && (
-              <div className="widget-window" style={{ [position === 'right' ? 'right' : 'left']: '1.25rem' }}>
+              <div className={`widget-window pos-${position}`}>
                 <div className="widget-window-header" style={{ background: color, color: contrastColor }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
                     {launcherStyle !== 'icon' && logoUrl && (
-                      <img src={logoUrl} alt="Logo" style={{ width: 20, height: 20, borderRadius: '50%', objectFit: 'cover' }} />
+                      <img src={logoUrl} alt="Logo" style={{ width: 20, height: 20, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
                     )}
-                    <span style={{ fontWeight: 600 }}>{widgetName}</span>
+                    <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{widgetName}</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => setOpen(false)}
-                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'inherit' }}
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'inherit', flexShrink: 0 }}
                   >
                     <X size={18} strokeWidth={2} />
                   </button>

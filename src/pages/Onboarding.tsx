@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { ArrowLeft, LogIn } from 'lucide-react';
 import { apiRequest, setTokens } from '../lib/api';
 import { setUser } from '../lib/auth';
 import { useTranslation } from '../lib/i18n';
@@ -81,13 +82,45 @@ export default function Onboarding() {
   const titles = [t('onboard.s1'), t('onboard.s2'), t('onboard.s3'), t('onboard.s4')];
 
   return (
-    <main className="container" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: '40px' }}>
+    <main className="container" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: '40px', paddingBottom: '40px' }}>
       <div style={{ width: '100%', maxWidth: '400px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <Link to="/" className="logo-text" style={{ fontSize: '2rem' }}>
-            Allo
+          <Link
+            to="/"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              color: 'var(--text-secondary)',
+              fontSize: '0.85rem',
+              textDecoration: 'none',
+              transition: 'color 0.15s ease',
+            }}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-primary)')}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)')}
+          >
+            <ArrowLeft size={16} /> Back to home
           </Link>
-          <LangSelect compact />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <Link
+              to="/login"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                color: 'var(--text-primary)',
+                fontSize: '0.8rem',
+                padding: '0.35rem 0.65rem',
+                border: '1px solid var(--border-color)',
+                borderRadius: '4px',
+                textDecoration: 'none',
+                background: 'rgba(255, 255, 255, 0.04)',
+              }}
+            >
+              <LogIn size={13} /> Log In
+            </Link>
+            <LangSelect compact />
+          </div>
         </div>
 
         <h1 style={{ fontSize: '1.75rem', marginBottom: '0.5rem', textAlign: 'center' }}>{titles[step - 1]}</h1>
@@ -177,10 +210,19 @@ export default function Onboarding() {
             {loading ? 'Processing…' : step === 4 ? t('onboard.complete') : t('onboard.continue')}
           </button>
 
-          {step > 1 && (
-            <button type="button" className="btn btn-ghost" style={{ width: '100%', marginTop: '0.75rem' }} onClick={() => setStep((s) => s - 1)} disabled={loading}>
+          {step > 1 ? (
+            <button type="button" className="btn btn-ghost" style={{ width: '100%', marginTop: '0.75rem', border: '1px solid var(--border-color)' }} onClick={() => setStep((s) => s - 1)} disabled={loading}>
               {t('onboard.back')}
             </button>
+          ) : (
+            <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                Already have an account?{' '}
+                <Link to="/login" style={{ color: 'var(--text-primary)', borderBottom: '1px solid var(--text-primary)', fontWeight: 500 }}>
+                  Log In
+                </Link>
+              </p>
+            </div>
           )}
         </form>
       </div>

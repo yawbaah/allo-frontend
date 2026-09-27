@@ -25,11 +25,11 @@ export default function Landing() {
       <section className="container hero">
         <h1>{t('hero.title')}</h1>
         <p>{t('hero.subtitle')}</p>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-          <Link to="/onboarding" className="btn btn-primary" style={{ padding: '1rem 2rem', fontSize: '1rem' }}>
+        <div className="hero-cta-wrapper">
+          <Link to="/onboarding" className="btn btn-primary hero-cta-btn">
             {t('hero.cta')}
           </Link>
-          <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{t('hero.guarantee')}</span>
+          <span className="hero-guarantee">{t('hero.guarantee')}</span>
         </div>
       </section>
 
@@ -40,7 +40,7 @@ export default function Landing() {
           ))}
         </div>
       </section>
-      <section className="marquee-wrapper" style={{ marginTop: '1rem', paddingBottom: '4rem' }}>
+      <section className="marquee-wrapper marquee-bottom">
         <div className="marquee-track right">
           {[...bottomImages, ...bottomImages].map((src, i) => (
             <img key={i} src={src} alt="" />
@@ -48,61 +48,26 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="container section" style={{ textAlign: 'center' }} id="product">
-        <h2
-          style={{
-            fontSize: 'clamp(2rem, 4vw, 3rem)',
-            marginBottom: '4rem',
-            maxWidth: '800px',
-            margin: '0 auto 4rem',
-          }}
-        >
+      <section className="container section" id="product">
+        <h2 className="landing-stats-headline">
           {t('stats.headline')}
         </h2>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: 'clamp(2rem, 6vw, 6rem)',
-            flexWrap: 'wrap',
-          }}
-        >
-          <div>
-            <div style={{ fontSize: '3.5rem', fontWeight: 300 }}>10M+</div>
-            <div
-              style={{
-                color: 'var(--text-secondary)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                fontSize: '0.8rem',
-              }}
-            >
+        <div className="landing-stats-row">
+          <div className="landing-stat-item">
+            <div className="landing-stat-val">10M+</div>
+            <div className="landing-stat-label">
               {t('stats.questions')}
             </div>
           </div>
-          <div>
-            <div style={{ fontSize: '3.5rem', fontWeight: 300 }}>94%</div>
-            <div
-              style={{
-                color: 'var(--text-secondary)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                fontSize: '0.8rem',
-              }}
-            >
+          <div className="landing-stat-item">
+            <div className="landing-stat-val">94%</div>
+            <div className="landing-stat-label">
               {t('stats.resolution')}
             </div>
           </div>
-          <div>
-            <div style={{ fontSize: '3.5rem', fontWeight: 300 }}>1.2s</div>
-            <div
-              style={{
-                color: 'var(--text-secondary)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                fontSize: '0.8rem',
-              }}
-            >
+          <div className="landing-stat-item">
+            <div className="landing-stat-val">1.2s</div>
+            <div className="landing-stat-label">
               {t('stats.response')}
             </div>
           </div>
@@ -127,7 +92,7 @@ export default function Landing() {
       </section>
 
       <section className="container section" id="how">
-        <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', marginBottom: '3.5rem', textAlign: 'center' }}>
+        <h2 className="landing-how-headline">
           {t('how.title')}
         </h2>
         <div className="how-grid">
@@ -154,15 +119,12 @@ export default function Landing() {
         </div>
       </section>
 
-      <section
-        className="container section"
-        style={{ textAlign: 'center', borderTop: '1px solid var(--border-color)' }}
-      >
-        <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3.5rem)', marginBottom: '2rem' }}>{t('cta.title')}</h2>
-        <Link to="/onboarding" className="btn btn-primary" style={{ padding: '1rem 2rem', fontSize: '1rem' }}>
+      <section className="container section landing-cta-section">
+        <h2 className="landing-cta-title">{t('cta.title')}</h2>
+        <Link to="/onboarding" className="btn btn-primary landing-cta-btn">
           {t('cta.button')}
         </Link>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '1rem' }}>{t('cta.sub')}</p>
+        <p className="landing-cta-sub">{t('cta.sub')}</p>
       </section>
     </main>
   );
