@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, ArrowLeft } from 'lucide-react';
 import { apiRequest } from '../../lib/api';
 import { useTranslation } from '../../lib/i18n';
 import { getUser } from '../../lib/auth';
+import { useIsMobile } from '../../hooks/useMediaQuery';
 
 type Message = {
   id: string;
@@ -21,13 +22,6 @@ type Conversation = {
   updated_at: string;
   messages?: Message[];
 };
-
-// Helper: Dynamically get WS host matching current environment (Railway vs Local)
-function getWebSocketBaseUrl(): string {
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
-  const cleanApi = apiUrl.replace(/\/api\/?$/, '');
-  return cleanApi.replace(/^https:\/\//, 'wss://').replace(/^http:\/\//, 'ws://');
-}
 
 function renderFormattedMessage(text: string) {
   if (!text) return null;
@@ -80,6 +74,7 @@ function renderFormattedMessage(text: string) {
 
 export default function Inbox() {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
   const [threads, setThreads] = useState<Conversation[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeThread, setActiveThread] = useState<Conversation | null>(null);
@@ -91,7 +86,12 @@ export default function Inbox() {
   const [autoTranslate, setAutoTranslate] = useState(false);
 
   const activeIdRef = useRef<string | null>(null);
+  const isMobileRef = useRef(isMobile);
   const audioContextRef = useRef<AudioContext | null>(null);
+
+  useEffect(() => {
+    isMobileRef.current = isMobile;
+  }, [isMobile]);
 
   useEffect(() => {
     activeIdRef.current = activeId;
@@ -127,7 +127,7 @@ export default function Inbox() {
     try {
       const data = await apiRequest<Conversation[]>('/chat/conversations/');
       setThreads(data);
-      if (data.length > 0 && !activeIdRef.current) {
+      if (data.length > 0 && !activeIdRef.current && !isMobileRef.current) {
         setActiveId(data[0].id);
       }
     } catch (err) {
@@ -146,93 +146,76 @@ export default function Inbox() {
     }
   };
 
-  // 1. Connect to Company Dashboard Global Alert Channel
   useEffect(() => {
     fetchThreads();
 
     const currentUser = getUser();
     if (!currentUser || !currentUser.company_id) return;
 
-    const wsBase = getWebSocketBaseUrl();
+    // Use WebSocket scheme and host dynamically
+    const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsBase = import.meta.env.VITE_WS_URL || `${wsProto}//localhost:8000`;
     const wsUrl = `${wsBase}/ws/dash/company/${currentUser.company_id}/`;
-    console.log('[Dashboard Inbox] Connecting alert socket:', wsUrl);
+    const dashSocket = new WebSocket(wsUrl);
 
-    let dashSocket: WebSocket | null = null;
+    dashSocket.onmessage = (e) => {
+      const data = JSON.parse(e.data);
+      if (data.type === 'handoff_alert') {
+        setThreads((prevThreads) => {
+          const filtered = prevThreads.filter((t) => t.id !== data.conversation_id);
+          const updatedThread: Conversation = {
+            id: data.conversation_id,
+            visitor_identifier: data.visitor_identifier,
+            visitor_lang: 'en',
+            status: data.status,
+            preview_text: data.preview_text,
+            updated_at: data.updated_at,
+          };
+          return [updatedThread, ...filtered];
+        });
 
-    try {
-      dashSocket = new WebSocket(wsUrl);
-
-      dashSocket.onmessage = (e) => {
-        const data = JSON.parse(e.data);
-        if (data.type === 'handoff_alert') {
-          setThreads((prevThreads) => {
-            const filtered = prevThreads.filter((t) => t.id !== data.conversation_id);
-            const updatedThread: Conversation = {
-              id: data.conversation_id,
-              visitor_identifier: data.visitor_identifier,
-              visitor_lang: 'en',
-              status: data.status,
-              preview_text: data.preview_text,
-              updated_at: data.updated_at,
-            };
-            return [updatedThread, ...filtered];
-          });
-
-          if (data.status === 'human') {
-            playAlertSound();
-          }
+        if (data.status === 'human') {
+          playAlertSound();
         }
-      };
-    } catch (err) {
-      console.error('[Dashboard Inbox] Alert socket error:', err);
-    }
+      }
+    };
 
     return () => {
-      if (dashSocket) dashSocket.close();
+      dashSocket.close();
     };
   }, []);
 
   useEffect(() => {
-    if (activeId) {
-      fetchThreadDetails(activeId);
+    if (!activeId) {
+      setActiveThread(null);
+      return;
     }
-  }, [activeId]);
 
-  // 2. Connect to Active Conversation Live Stream
-  useEffect(() => {
-    if (!activeId) return;
+    fetchThreadDetails(activeId);
 
-    const wsBase = getWebSocketBaseUrl();
-    const wsUrl = `${wsBase}/ws/chat/conversation/${activeId}/`;
-    console.log('[Dashboard Inbox] Connecting chat socket:', wsUrl);
+    const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsBase = import.meta.env.VITE_WS_URL || `${wsProto}//localhost:8000`;
+    const chatSocket = new WebSocket(`${wsBase}/ws/chat/conversation/${activeId}/`);
 
-    let chatSocket: WebSocket | null = null;
+    chatSocket.onmessage = (e) => {
+      const data = JSON.parse(e.data);
+      if (data.type === 'chat_message') {
+        const newMsg: Message = data.message;
+        setActiveThread((prev) => {
+          if (!prev || prev.id !== activeId) return prev;
+          const exists = prev.messages?.some((m) => m.id === newMsg.id);
+          if (exists) return prev;
 
-    try {
-      chatSocket = new WebSocket(wsUrl);
-
-      chatSocket.onmessage = (e) => {
-        const data = JSON.parse(e.data);
-        if (data.type === 'chat_message') {
-          const newMsg: Message = data.message;
-          setActiveThread((prev) => {
-            if (!prev || prev.id !== activeId) return prev;
-            const exists = prev.messages?.some((m) => m.id === newMsg.id);
-            if (exists) return prev;
-
-            return {
-              ...prev,
-              messages: [...(prev.messages || []), newMsg],
-            };
-          });
-        }
-      };
-    } catch (err) {
-      console.error('[Dashboard Inbox] Chat socket error:', err);
-    }
+          return {
+            ...prev,
+            messages: [...(prev.messages || []), newMsg],
+          };
+        });
+      }
+    };
 
     return () => {
-      if (chatSocket) chatSocket.close();
+      chatSocket.close();
     };
   }, [activeId]);
 
@@ -309,108 +292,125 @@ export default function Inbox() {
         </div>
       ) : (
         <div className="inbox-layout">
-          <div className="inbox-list">
-            {threads.map((tItem) => (
-              <div
-                key={tItem.id}
-                className={`inbox-item ${tItem.id === activeId ? 'active' : ''}`}
-                onClick={() => setActiveId(tItem.id)}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
-                  <strong style={{ fontSize: '0.875rem' }}>{tItem.visitor_identifier}</strong>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{formatDate(tItem.updated_at)}</span>
-                </div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {tItem.preview_text || 'No preview'}
-                </div>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <span
-                    className={`badge ${
-                      tItem.status === 'human'
-                        ? 'badge-human'
+          {(!isMobile || !activeId) && (
+            <div className="inbox-list">
+              {threads.map((tItem) => (
+                <div
+                  key={tItem.id}
+                  className={`inbox-item ${tItem.id === activeId ? 'active' : ''}`}
+                  onClick={() => setActiveId(tItem.id)}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                    <strong style={{ fontSize: '0.875rem' }}>{tItem.visitor_identifier}</strong>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{formatDate(tItem.updated_at)}</span>
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {tItem.preview_text || 'No preview'}
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <span
+                      className={`badge ${
+                        tItem.status === 'human'
+                          ? 'badge-human'
+                          : tItem.status === 'live'
+                          ? 'badge-live'
+                          : 'badge-ai'
+                      }`}
+                    >
+                      {tItem.status === 'human'
+                        ? t('inbox.needsHuman')
                         : tItem.status === 'live'
-                        ? 'badge-live'
-                        : 'badge-ai'
-                    }`}
-                  >
-                    {tItem.status === 'human'
-                      ? t('inbox.needsHuman')
-                      : tItem.status === 'live'
-                      ? t('inbox.live')
-                      : 'AI'}
-                  </span>
+                        ? t('inbox.live')
+                        : 'AI'}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
-          <div className="inbox-chat">
-            {activeThread ? (
-              <>
-                <div className="inbox-chat-header">
-                  <div>
-                    <strong>{activeThread.visitor_identifier}</strong>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                      {t('inbox.speaking')}: {activeThread.visitor_lang || 'en'} · Status: {activeThread.status}
+          {(!isMobile || activeId) && (
+            <div className="inbox-chat">
+              {activeThread ? (
+                <>
+                  <div className="inbox-chat-header">
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      {isMobile && (
+                        <button
+                          type="button"
+                          className="inbox-back-btn"
+                          onClick={() => setActiveId(null)}
+                          title="Back to conversations"
+                        >
+                          <ArrowLeft size={16} />
+                          <span>Back</span>
+                        </button>
+                      )}
+                      <div>
+                        <strong>{activeThread.visitor_identifier}</strong>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                          {t('inbox.speaking')}: {activeThread.visitor_lang || 'en'} · Status: {activeThread.status}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                      <label style={{ display: 'flex', gap: '0.4rem', fontSize: '0.8rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                        <input type="checkbox" checked={autoTranslate} onChange={(e) => setAutoTranslate(e.target.checked)} />
+                        {t('inbox.autoTranslate')} {agentLang}
+                      </label>
+
+                      {activeThread.status === 'human' && (
+                        <button className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }} onClick={handleJoin}>
+                          {t('inbox.join')}
+                        </button>
+                      )}
+
+                      {activeThread.status !== 'resolved' && (
+                        <button className="btn btn-ghost" style={{ border: '1px solid var(--border-color)', padding: '0.4rem 0.8rem', fontSize: '0.75rem' }} onClick={handleResolve}>
+                          Resolve
+                        </button>
+                      )}
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <label style={{ display: 'flex', gap: '0.4rem', fontSize: '0.8rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>
-                      <input type="checkbox" checked={autoTranslate} onChange={(e) => setAutoTranslate(e.target.checked)} />
-                      {t('inbox.autoTranslate')} {agentLang}
-                    </label>
-
-                    {activeThread.status === 'human' && (
-                      <button className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }} onClick={handleJoin}>
-                        {t('inbox.join')}
-                      </button>
-                    )}
-
-                    {activeThread.status !== 'resolved' && (
-                      <button className="btn btn-ghost" style={{ border: '1px solid var(--border-color)', padding: '0.4rem 0.8rem', fontSize: '0.75rem' }} onClick={handleResolve}>
-                        Resolve
-                      </button>
-                    )}
+                  <div className="inbox-messages">
+                    {(activeThread.messages || []).map((m) => {
+                      const isAgent = m.sender_role === 'agent';
+                      return (
+                        <div key={m.id} className={`msg ${m.sender_role === 'user' ? 'msg-user' : isAgent ? 'msg-agent' : 'msg-ai'}`}>
+                          <div style={{ fontSize: '0.9rem', lineHeight: 1.5 }}>
+                            {renderFormattedMessage(m.content)}
+                          </div>
+                          <div style={{ fontSize: '0.65rem', marginTop: '0.4rem', opacity: 0.5, textAlign: isAgent ? 'right' : 'left' }}>
+                            {m.sender_role === 'ai' ? 'Allo AI' : isAgent ? 'You' : 'Visitor'} · {formatDate(m.created_at)}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                </div>
 
-                <div className="inbox-messages">
-                  {(activeThread.messages || []).map((m) => {
-                    const isAgent = m.sender_role === 'agent';
-                    return (
-                      <div key={m.id} className={`msg ${m.sender_role === 'user' ? 'msg-user' : isAgent ? 'msg-agent' : 'msg-ai'}`}>
-                        <div style={{ fontSize: '0.9rem', lineHeight: 1.5 }}>
-                          {renderFormattedMessage(m.content)}
-                        </div>
-                        <div style={{ fontSize: '0.65rem', marginTop: '0.4rem', opacity: 0.5, textAlign: isAgent ? 'right' : 'left' }}>
-                          {m.sender_role === 'ai' ? 'Allo AI' : isAgent ? 'You' : 'Visitor'} · {formatDate(m.created_at)}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--border-color)', background: '#0a0a0a' }}>
-                  <form style={{ display: 'flex', gap: '0.75rem' }} onSubmit={sendReply}>
-                    <input
-                      className="form-input"
-                      placeholder={t('inbox.placeholder')}
-                      value={reply}
-                      onChange={(e) => setReply(e.target.value)}
-                      disabled={sending || activeThread.status === 'resolved'}
-                      style={{ background: '#000' }}
-                    />
-                    <button type="submit" className="btn btn-primary" disabled={sending || activeThread.status === 'resolved'}>
-                      {sending ? 'Sending…' : t('inbox.send')}
-                    </button>
-                  </form>
-                </div>
-              </>
-            ) : (
-              <p style={{ color: 'var(--text-secondary)', padding: '2rem' }}>Select a conversation to view details.</p>
-            )}
-          </div>
+                  <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--border-color)', background: '#0a0a0a' }}>
+                    <form style={{ display: 'flex', gap: '0.75rem' }} onSubmit={sendReply}>
+                      <input
+                        className="form-input"
+                        placeholder={t('inbox.placeholder')}
+                        value={reply}
+                        onChange={(e) => setReply(e.target.value)}
+                        disabled={sending || activeThread.status === 'resolved'}
+                        style={{ background: '#000' }}
+                      />
+                      <button type="submit" className="btn btn-primary" disabled={sending || activeThread.status === 'resolved'}>
+                        {sending ? 'Sending…' : t('inbox.send')}
+                      </button>
+                    </form>
+                  </div>
+                </>
+              ) : (
+                <p style={{ color: 'var(--text-secondary)', padding: '2rem' }}>Select a conversation to view details.</p>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
