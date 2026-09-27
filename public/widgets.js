@@ -2,7 +2,7 @@
   const scriptTag = document.currentScript || document.querySelector('script[src*="widget.js"]');
   
   // PRODUCTION BACKEND ENDPOINTS (Default to Railway Production or data-api attribute if provided)
-  const API_HOST = (scriptTag && scriptTag.getAttribute('data-api-host')) || 'https://allo-backend-production.up.railway.app';
+  const API_HOST = (scriptTag && scriptTag.getAttribute('data-api-host')) || 'https://allo-backend-production-0fb3.up.railway.app/api';
   const WS_HOST = API_HOST.replace('https://', 'wss://').replace('http://', 'ws://');
   
   const companyId = scriptTag ? scriptTag.getAttribute('data-company-id') : 'demo';
