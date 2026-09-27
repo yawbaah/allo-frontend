@@ -102,7 +102,7 @@ export default function Settings() {
     <div style={{ maxWidth: '560px' }}>
       {company && (
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
-          Plan: <strong style={{ color: '#fff' }}>{company.plan}</strong>
+          Plan: <strong style={{ color: 'var(--text-primary)' }}>{company.plan}</strong>
           {company.industry ? ` · ${company.industry}` : ''}
           {company.size ? ` · ${company.size}` : ''}
         </p>

@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { I18nProvider, useTranslation } from './lib/i18n';
+import { ThemeProvider } from './lib/theme';
 import LangSelect from './components/LangSelect';
+import ThemeToggle from './components/ThemeToggle';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Onboarding from './pages/Onboarding';
@@ -41,8 +43,9 @@ function Navbar() {
         </div>
 
         {/* Desktop Action Buttons */}
-        <div className="nav-desktop" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <div className="nav-desktop" style={{ display: 'flex', gap: '0.85rem', alignItems: 'center' }}>
           <LangSelect />
+          <ThemeToggle compact />
           <Link to="/login" className="btn btn-ghost">
             {t('nav.login')}
           </Link>
@@ -51,15 +54,18 @@ function Navbar() {
           </Link>
         </div>
 
-        {/* Mobile Toggle Button */}
-        <button
-          type="button"
-          className="nav-mobile-btn"
-          onClick={() => setMenuOpen((prev) => !prev)}
-          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-        >
-          {menuOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={22} strokeWidth={1.5} />}
-        </button>
+        {/* Mobile Action Controls */}
+        <div className="nav-mobile-actions-bar" style={{ display: 'none', alignItems: 'center', gap: '0.5rem' }}>
+          <ThemeToggle compact />
+          <button
+            type="button"
+            className="nav-mobile-btn"
+            onClick={() => setMenuOpen((prev) => !prev)}
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          >
+            {menuOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={22} strokeWidth={1.5} />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Dropdown Menu */}
@@ -81,8 +87,9 @@ function Navbar() {
           </div>
 
           <div className="public-mobile-actions">
-            <div style={{ marginBottom: '0.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', gap: '0.5rem' }}>
               <LangSelect compact={false} />
+              <ThemeToggle />
             </div>
             <Link
               to="/login"
@@ -156,34 +163,36 @@ function PricingPage() {
 
 export default function App() {
   return (
-    <I18nProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/pricing" element={<PricingPage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+    <ThemeProvider>
+      <I18nProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
-          <Route
-            path="/dashboard"
-            element={
-              <RequireAuth>
-                <DashboardLayout />
-              </RequireAuth>
-            }
-          >
-            <Route index element={<Overview />} />
-            <Route path="knowledge" element={<Knowledge />} />
-            <Route path="inbox" element={<Inbox />} />
-            <Route path="analytics" element={<Analytics />} />
-            <Route path="deploy" element={<Deploy />} />
-            <Route path="billing" element={<Billing />} /> {/* <-- Add Route Here */}
-            <Route path="settings" element={<Settings />} />
-          </Route>
-        </Routes>
-      </Router>
-    </I18nProvider>
+            <Route
+              path="/dashboard"
+              element={
+                <RequireAuth>
+                  <DashboardLayout />
+                </RequireAuth>
+              }
+            >
+              <Route index element={<Overview />} />
+              <Route path="knowledge" element={<Knowledge />} />
+              <Route path="inbox" element={<Inbox />} />
+              <Route path="analytics" element={<Analytics />} />
+              <Route path="deploy" element={<Deploy />} />
+              <Route path="billing" element={<Billing />} />
+              <Route path="settings" element={<Settings />} />
+            </Route>
+          </Routes>
+        </Router>
+      </I18nProvider>
+    </ThemeProvider>
   );
 }

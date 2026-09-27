@@ -53,7 +53,7 @@ function renderFormattedMessage(text: string) {
             border: '1px solid var(--border-color)',
             display: 'block',
             objectFit: 'contain',
-            background: '#111',
+            background: 'var(--card-bg)',
           }}
           onError={(e) => {
             (e.target as HTMLImageElement).style.display = 'none';
@@ -390,15 +390,14 @@ export default function Inbox() {
                     })}
                   </div>
 
-                  <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--border-color)', background: '#0a0a0a' }}>
-                    <form style={{ display: 'flex', gap: '0.75rem' }} onSubmit={sendReply}>
+                  <div className="inbox-reply">
+                    <form style={{ display: 'flex', gap: '0.75rem', width: '100%' }} onSubmit={sendReply}>
                       <input
                         className="form-input"
                         placeholder={t('inbox.placeholder')}
                         value={reply}
                         onChange={(e) => setReply(e.target.value)}
                         disabled={sending || activeThread.status === 'resolved'}
-                        style={{ background: '#000' }}
                       />
                       <button type="submit" className="btn btn-primary" disabled={sending || activeThread.status === 'resolved'}>
                         {sending ? 'Sending…' : t('inbox.send')}

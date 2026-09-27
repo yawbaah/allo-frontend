@@ -200,11 +200,11 @@ export default function Billing() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
             <ShieldAlert size={28} style={{ color: '#ef4444', flexShrink: 0 }} />
             <div>
-              <strong style={{ display: 'block', color: '#fff', fontSize: '1.05rem', marginBottom: '0.25rem' }}>
+              <strong style={{ display: 'block', color: 'var(--text-primary)', fontSize: '1.05rem', marginBottom: '0.25rem' }}>
                 Account Locked — Payment Required
               </strong>
               <span style={{ fontSize: '0.85rem', color: '#fca5a5' }}>
-                You selected the <strong style={{ color: '#fff' }}>{billing.plan.toUpperCase()}</strong> plan but no payment has been received.
+                You selected the <strong style={{ color: 'var(--text-primary)' }}>{billing.plan.toUpperCase()}</strong> plan but no payment has been received.
                 Complete payment below to unlock knowledge ingestion, live chat, and your embed widget.
               </span>
             </div>
@@ -238,8 +238,8 @@ export default function Billing() {
             <span
               className="badge"
               style={{
-                background: isPaid ? '#fff' : 'rgba(239, 68, 68, 0.15)',
-                color: isPaid ? '#000' : '#ef4444',
+                background: isPaid ? 'var(--badge-live-bg)' : 'rgba(239, 68, 68, 0.15)',
+                color: isPaid ? 'var(--badge-live-text)' : '#ef4444',
                 border: isPaid ? 'none' : '1px solid #ef4444',
               }}
             >
@@ -293,7 +293,7 @@ export default function Billing() {
           <div
             style={{
               height: '8px',
-              background: 'rgba(255,255,255,0.08)',
+              background: 'var(--meter-bg)',
               borderRadius: '4px',
               overflow: 'hidden',
               marginTop: '0.5rem',
@@ -303,7 +303,7 @@ export default function Billing() {
               style={{
                 width: isPaid ? `${Math.min(billing.usage_percentage, 100)}%` : '0%',
                 height: '100%',
-                background: '#ffffff',
+                background: 'var(--meter-fill)',
                 transition: 'width 0.4s ease',
               }}
             />

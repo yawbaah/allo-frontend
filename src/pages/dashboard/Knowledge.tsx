@@ -238,7 +238,7 @@ export default function Knowledge() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <Lock size={22} style={{ color: '#ef4444', flexShrink: 0 }} />
             <div>
-              <strong style={{ display: 'block', color: '#fff', fontSize: '1rem', marginBottom: '0.2rem' }}>
+              <strong style={{ display: 'block', color: 'var(--text-primary)', fontSize: '1rem', marginBottom: '0.2rem' }}>
                 Knowledge Base Locked
               </strong>
               <span style={{ fontSize: '0.85rem', color: '#fca5a5' }}>
@@ -274,7 +274,7 @@ export default function Knowledge() {
       {error && <p style={{ color: '#f87171', fontSize: '0.85rem', marginBottom: '1.5rem' }}>{error}</p>}
 
       <div className="kb-action-bar" style={{ display: 'flex', gap: '0.75rem', marginBottom: '2.5rem', flexWrap: 'wrap', opacity: isPaid ? 1 : 0.4, pointerEvents: isPaid ? 'all' : 'none' }}>
-        <button type="button" className="btn btn-primary upload-btn" onClick={() => setShowTextModal(true)} style={{ background: '#ffffff', color: '#000000', fontWeight: 600 }}>
+        <button type="button" className="btn btn-primary upload-btn" onClick={() => setShowTextModal(true)} style={{ fontWeight: 600 }}>
           <FileCode size={16} strokeWidth={2} /> ADD TEXT
         </button>
         <button type="button" className="btn btn-ghost upload-btn" onClick={() => docInputRef.current?.click()}>

@@ -17,6 +17,7 @@ import { clearSession, getSession } from '../../lib/auth';
 import { useTranslation } from '../../lib/i18n';
 import { apiRequest } from '../../lib/api';
 import LangSelect from '../../components/LangSelect';
+import ThemeToggle from '../../components/ThemeToggle';
 import MobileSidebar from '../../components/MobileSidebar';
 import { useIsTablet } from '../../hooks/useMediaQuery';
 
@@ -136,11 +137,19 @@ export default function DashboardLayout() {
             ))}
           </nav>
 
-          <div style={{ padding: '0 1rem', marginBottom: '0.75rem' }}>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
-              {t('dash.language')}
+          <div style={{ padding: '0 1rem', marginBottom: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                {t('dash.language')}
+              </span>
+              <LangSelect compact />
             </div>
-            <LangSelect compact />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                Theme
+              </span>
+              <ThemeToggle compact />
+            </div>
           </div>
 
           {/* Dynamic Usage Meter block */}
@@ -148,14 +157,14 @@ export default function DashboardLayout() {
             {billing ? (
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', marginBottom: '0.25rem' }}>
-                  <span style={{ textTransform: 'capitalize', fontWeight: 'bold', color: '#fff' }}>{billing.plan}</span>
-                  <span>{billing.message_usage.toLocaleString()} / {billing.message_limit.toLocaleString()}</span>
+                  <span style={{ textTransform: 'capitalize', fontWeight: 'bold', color: 'var(--text-primary)' }}>{billing.plan}</span>
+                  <span style={{ color: 'var(--text-secondary)' }}>{billing.message_usage.toLocaleString()} / {billing.message_limit.toLocaleString()}</span>
                 </div>
-                <div style={{ height: '4px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px', overflow: 'hidden' }}>
+                <div style={{ height: '4px', background: 'var(--meter-bg)', borderRadius: '2px', overflow: 'hidden' }}>
                   <div
                     style={{
                       height: '100%',
-                      background: billing.message_usage >= billing.message_limit ? '#ef4444' : '#ffffff',
+                      background: billing.message_usage >= billing.message_limit ? '#ef4444' : 'var(--meter-fill)',
                       width: `${Math.min(billing.usage_percentage, 100)}%`,
                       transition: 'width 0.3s ease',
                     }}
@@ -188,19 +197,21 @@ export default function DashboardLayout() {
             <h1>{title}</h1>
           </div>
 
-          <div className="user-menu-wrapper" ref={menuRef}>
-            <button type="button" className="avatar-btn" onClick={() => setUserMenuOpen((v) => !v)}>
-              <span className="user-company-label">{companyName}</span>
-              <div className="avatar">{initials}</div>
-              <ChevronDown
-                size={14}
-                style={{
-                  transform: userMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.2s ease',
-                  color: 'var(--text-secondary)',
-                }}
-              />
-            </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <ThemeToggle compact />
+            <div className="user-menu-wrapper" ref={menuRef}>
+              <button type="button" className="avatar-btn" onClick={() => setUserMenuOpen((v) => !v)}>
+                <span className="user-company-label">{companyName}</span>
+                <div className="avatar">{initials}</div>
+                <ChevronDown
+                  size={14}
+                  style={{
+                    transform: userMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.2s ease',
+                    color: 'var(--text-secondary)',
+                  }}
+                />
+              </button>
 
             {userMenuOpen && (
               <div className="user-dropdown">
@@ -226,6 +237,7 @@ export default function DashboardLayout() {
                 </button>
               </div>
             )}
+            </div>
           </div>
         </header>
 

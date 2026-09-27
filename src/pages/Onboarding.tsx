@@ -5,6 +5,7 @@ import { apiRequest, setTokens } from '../lib/api';
 import { setUser } from '../lib/auth';
 import { useTranslation } from '../lib/i18n';
 import LangSelect from '../components/LangSelect';
+import ThemeToggle from '../components/ThemeToggle';
 
 export default function Onboarding() {
   const { t } = useTranslation();
@@ -101,7 +102,7 @@ export default function Onboarding() {
           >
             <ArrowLeft size={16} /> Back to home
           </Link>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Link
               to="/login"
               style={{
@@ -114,11 +115,12 @@ export default function Onboarding() {
                 border: '1px solid var(--border-color)',
                 borderRadius: '4px',
                 textDecoration: 'none',
-                background: 'rgba(255, 255, 255, 0.04)',
+                background: 'var(--hover-bg)',
               }}
             >
               <LogIn size={13} /> Log In
             </Link>
+            <ThemeToggle compact />
             <LangSelect compact />
           </div>
         </div>

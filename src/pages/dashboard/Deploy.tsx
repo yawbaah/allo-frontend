@@ -171,7 +171,7 @@ export default function Deploy() {
 
           <div style={{ marginBottom: '2rem', padding: '0.85rem 1.1rem', background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '4px' }}>
             <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-secondary)', letterSpacing: '0.05em' }}>Your Company ID (UUID)</span>
-            <div style={{ fontFamily: 'monospace', fontSize: '0.9rem', color: '#fff', marginTop: '0.25rem', wordBreak: 'break-all' }}>
+            <div style={{ fontFamily: 'monospace', fontSize: '0.9rem', color: 'var(--text-primary)', marginTop: '0.25rem', wordBreak: 'break-all' }}>
               {companyId}
             </div>
           </div>
