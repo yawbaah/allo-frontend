@@ -273,7 +273,7 @@ export default function Knowledge() {
 
       {error && <p style={{ color: '#f87171', fontSize: '0.85rem', marginBottom: '1.5rem' }}>{error}</p>}
 
-      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '2.5rem', flexWrap: 'wrap', opacity: isPaid ? 1 : 0.4, pointerEvents: isPaid ? 'all' : 'none' }}>
+      <div className="kb-action-bar" style={{ display: 'flex', gap: '0.75rem', marginBottom: '2.5rem', flexWrap: 'wrap', opacity: isPaid ? 1 : 0.4, pointerEvents: isPaid ? 'all' : 'none' }}>
         <button type="button" className="btn btn-primary upload-btn" onClick={() => setShowTextModal(true)} style={{ background: '#ffffff', color: '#000000', fontWeight: 600 }}>
           <FileCode size={16} strokeWidth={2} /> ADD TEXT
         </button>
@@ -300,54 +300,56 @@ export default function Knowledge() {
           </p>
         </div>
       ) : (
-        <table className="dash-table">
-          <thead>
-            <tr>
-              <th>{t('kb.source')}</th>
-              <th>{t('kb.type')}</th>
-              <th>{t('kb.status')}</th>
-              <th>{t('kb.chunks')}</th>
-              <th>{t('kb.updated')}</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {sources.map((s) => (
-              <tr key={s.id}>
-                <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    {s.thumbnail_url && (
-                      <img src={s.thumbnail_url} alt="" style={{ width: 40, height: 40, borderRadius: 4, objectFit: 'cover' }} />
-                    )}
-                    <div>
-                      <div style={{ fontWeight: 500 }}>{s.title}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {s.type === 'text' ? s.image_description : (s.image_description || s.url_or_path)}
+        <div className="dash-table-wrapper">
+          <table className="dash-table">
+            <thead>
+              <tr>
+                <th>{t('kb.source')}</th>
+                <th>{t('kb.type')}</th>
+                <th>{t('kb.status')}</th>
+                <th>{t('kb.chunks')}</th>
+                <th>{t('kb.updated')}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {sources.map((s) => (
+                <tr key={s.id}>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      {s.thumbnail_url && (
+                        <img src={s.thumbnail_url} alt="" style={{ width: 40, height: 40, borderRadius: 4, objectFit: 'cover' }} />
+                      )}
+                      <div>
+                        <div style={{ fontWeight: 500 }}>{s.title}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {s.type === 'text' ? s.image_description : (s.image_description || s.url_or_path)}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </td>
-                <td>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', textTransform: 'uppercase', fontSize: '0.7rem' }}>
-                    {iconFor(s.type)} {s.type}
-                  </span>
-                </td>
-                <td>
-                  <span className={`badge badge-${s.status === 'indexed' ? 'ai' : s.status === 'failed' ? 'pending' : 'live'}`}>
-                    {s.status}
-                  </span>
-                </td>
-                <td>{s.chunk_count || '—'}</td>
-                <td style={{ color: 'var(--text-secondary)' }}>{formatDate(s.created_at)}</td>
-                <td>
-                  <button type="button" onClick={() => removeSource(s.id)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
-                    <X size={16} />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  </td>
+                  <td>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', textTransform: 'uppercase', fontSize: '0.7rem' }}>
+                      {iconFor(s.type)} {s.type}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`badge badge-${s.status === 'indexed' ? 'ai' : s.status === 'failed' ? 'pending' : 'live'}`}>
+                      {s.status}
+                    </span>
+                  </td>
+                  <td>{s.chunk_count || '—'}</td>
+                  <td style={{ color: 'var(--text-secondary)' }}>{formatDate(s.created_at)}</td>
+                  <td>
+                    <button type="button" onClick={() => removeSource(s.id)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                      <X size={16} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {showTextModal && (

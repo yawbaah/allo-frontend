@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { Menu, X } from 'lucide-react';
 import { I18nProvider, useTranslation } from './lib/i18n';
 import LangSelect from './components/LangSelect';
 import Landing from './pages/Landing';
@@ -15,24 +17,31 @@ import Inbox from './pages/dashboard/Inbox';
 import Deploy from './pages/dashboard/Deploy';
 import Settings from './pages/dashboard/Settings';
 import Analytics from './pages/dashboard/Analytics';
-import Billing from './pages/dashboard/Billing'; // <-- Add Import Here
+import Billing from './pages/dashboard/Billing';
 
 function Navbar() {
   const { t } = useTranslation();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const closeMenu = () => setMenuOpen(false);
 
   return (
     <nav>
       <div className="container nav-container">
-        <Link to="/" className="logo-text">
+        <Link to="/" className="logo-text" onClick={closeMenu}>
           Allo
         </Link>
-        <div className="nav-links">
+
+        {/* Desktop Links */}
+        <div className="nav-links nav-desktop">
           <a href="/#product">{t('nav.product')}</a>
           <a href="/#solutions">{t('nav.solutions')}</a>
           <Link to="/pricing">{t('nav.pricing')}</Link>
           <a href="/#how">{t('nav.how')}</a>
         </div>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+
+        {/* Desktop Action Buttons */}
+        <div className="nav-desktop" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <LangSelect />
           <Link to="/login" className="btn btn-ghost">
             {t('nav.login')}
@@ -41,7 +50,59 @@ function Navbar() {
             {t('nav.start')}
           </Link>
         </div>
+
+        {/* Mobile Toggle Button */}
+        <button
+          type="button"
+          className="nav-mobile-btn"
+          onClick={() => setMenuOpen((prev) => !prev)}
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+        >
+          {menuOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={22} strokeWidth={1.5} />}
+        </button>
       </div>
+
+      {/* Mobile Dropdown Menu */}
+      {menuOpen && (
+        <div className="public-mobile-dropdown">
+          <div className="public-mobile-links">
+            <a href="/#product" onClick={closeMenu}>
+              {t('nav.product')}
+            </a>
+            <a href="/#solutions" onClick={closeMenu}>
+              {t('nav.solutions')}
+            </a>
+            <Link to="/pricing" onClick={closeMenu}>
+              {t('nav.pricing')}
+            </Link>
+            <a href="/#how" onClick={closeMenu}>
+              {t('nav.how')}
+            </a>
+          </div>
+
+          <div className="public-mobile-actions">
+            <div style={{ marginBottom: '0.5rem' }}>
+              <LangSelect compact={false} />
+            </div>
+            <Link
+              to="/login"
+              className="btn btn-ghost"
+              style={{ width: '100%', border: '1px solid var(--border-color)', justifyContent: 'center' }}
+              onClick={closeMenu}
+            >
+              {t('nav.login')}
+            </Link>
+            <Link
+              to="/onboarding"
+              className="btn btn-primary"
+              style={{ width: '100%', justifyContent: 'center' }}
+              onClick={closeMenu}
+            >
+              {t('nav.start')}
+            </Link>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

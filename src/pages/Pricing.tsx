@@ -86,16 +86,16 @@ export default function Pricing() {
 
   return (
     <main>
-      <section className="container" style={{ padding: '10rem 2rem 4rem', textAlign: 'center' }}>
-        <h1 style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)', lineHeight: 1.1, marginBottom: '1rem' }}>
+      <section className="container hero" style={{ padding: '8rem 1rem 3.5rem' }}>
+        <h1 style={{ fontSize: 'clamp(2.25rem, 5vw, 4rem)', lineHeight: 1.1, marginBottom: '1rem' }}>
           {t('pricing.title')}
         </h1>
-        <p style={{ fontSize: '1.15rem', color: 'var(--text-secondary)', maxWidth: '560px', margin: '0 auto' }}>
+        <p style={{ fontSize: '1.1rem', color: 'var(--text-secondary)', maxWidth: '560px', margin: '0 auto' }}>
           {t('pricing.subtitle')}
         </p>
       </section>
 
-      <section className="container" style={{ paddingBottom: '6rem' }}>
+      <section className="container" style={{ paddingBottom: '5rem' }}>
         <div className="pricing-grid">
           {tiers.map((tier) => (
             <div key={tier.name} className={`pricing-card ${tier.highlighted ? 'highlighted' : ''}`}>
@@ -133,8 +133,8 @@ export default function Pricing() {
         </div>
       </section>
 
-      <section className="container" style={{ paddingBottom: '8rem' }}>
-        <h2 style={{ fontSize: '2.5rem', textAlign: 'center', marginBottom: '3rem' }}>{t('pricing.faqTitle')}</h2>
+      <section className="container" style={{ paddingBottom: '6rem' }}>
+        <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', textAlign: 'center', marginBottom: '2.5rem' }}>{t('pricing.faqTitle')}</h2>
         <div style={{ maxWidth: '720px', margin: '0 auto' }}>
           {faqs.map((f) => (
             <div key={f.q} className="faq-item">
@@ -146,14 +146,14 @@ export default function Pricing() {
       </section>
 
       <section
-        className="container"
-        style={{ padding: '6rem 2rem', textAlign: 'center', borderTop: '1px solid var(--border-color)' }}
+        className="container section landing-cta-section"
+        style={{ textAlign: 'center', borderTop: '1px solid var(--border-color)' }}
       >
-        <h2 style={{ fontSize: '3rem', marginBottom: '2rem' }}>{t('pricing.ctaTitle')}</h2>
-        <Link to="/onboarding" className="btn btn-primary" style={{ padding: '1rem 2rem', fontSize: '1rem' }}>
+        <h2 className="landing-cta-title">{t('pricing.ctaTitle')}</h2>
+        <Link to="/onboarding" className="btn btn-primary landing-cta-btn">
           {t('pricing.ctaButton')}
         </Link>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '1rem' }}>
+        <p className="landing-cta-sub">
           {t('pricing.ctaSub')}
         </p>
       </section>

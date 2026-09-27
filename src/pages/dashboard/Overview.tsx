@@ -87,32 +87,34 @@ export default function Overview() {
           </p>
         </div>
       ) : (
-        <table className="dash-table">
-          <thead>
-            <tr>
-              <th>{t('ov.visitor')}</th>
-              <th>{t('ov.message')}</th>
-              <th>{t('ov.status')}</th>
-              <th>{t('ov.time')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.recent_conversations.map((r) => (
-              <tr key={r.id}>
-                <td style={{ fontWeight: 500 }}>{r.visitor}</td>
-                <td style={{ color: 'var(--text-secondary)', maxWidth: '320px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {r.preview}
-                </td>
-                <td>
-                  <span className={`badge ${r.status === 'human' ? 'badge-human' : r.status === 'live' ? 'badge-live' : 'badge-ai'}`}>
-                    {r.status === 'human' ? t('ov.human') : r.status === 'live' ? 'Live' : t('ov.ai')}
-                  </span>
-                </td>
-                <td style={{ color: 'var(--text-secondary)' }}>{formatTime(r.time)}</td>
+        <div className="dash-table-wrapper">
+          <table className="dash-table">
+            <thead>
+              <tr>
+                <th>{t('ov.visitor')}</th>
+                <th>{t('ov.message')}</th>
+                <th>{t('ov.status')}</th>
+                <th>{t('ov.time')}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {data.recent_conversations.map((r) => (
+                <tr key={r.id}>
+                  <td style={{ fontWeight: 500 }}>{r.visitor}</td>
+                  <td style={{ color: 'var(--text-secondary)', maxWidth: '320px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {r.preview}
+                  </td>
+                  <td>
+                    <span className={`badge ${r.status === 'human' ? 'badge-human' : r.status === 'live' ? 'badge-live' : 'badge-ai'}`}>
+                      {r.status === 'human' ? t('ov.human') : r.status === 'live' ? 'Live' : t('ov.ai')}
+                    </span>
+                  </td>
+                  <td style={{ color: 'var(--text-secondary)' }}>{formatTime(r.time)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
