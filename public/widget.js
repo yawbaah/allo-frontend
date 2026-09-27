@@ -1,18 +1,27 @@
 (function () {
+  console.log('[Allo Widget] Initializing...');
+
   const scriptTag = document.currentScript || document.querySelector('script[src*="widget.js"]');
   
-  // PRODUCTION BACKEND ENDPOINTS (Default to Railway Production or data-api attribute if provided)
-  const API_HOST = (scriptTag && scriptTag.getAttribute('data-api-host')) || 'https://allo-backend-production-0fb3.up.railway.app/api';
+  if (!scriptTag) {
+    console.error('[Allo Widget] Script tag not found');
+    return;
+  }
+
+  const API_HOST = (scriptTag.getAttribute('data-api-host')) || 'https://allo-backend-production-0fb3.up.railway.app/api';
   const WS_HOST = API_HOST.replace('https://', 'wss://').replace('http://', 'ws://');
   
-  const companyId = scriptTag ? scriptTag.getAttribute('data-company-id') : 'demo';
+  const companyId = scriptTag.getAttribute('data-company-id') || 'demo';
+
+  console.log('[Allo Widget] Company ID:', companyId);
+  console.log('[Allo Widget] API Host:', API_HOST);
 
   let config = {
-    name: (scriptTag && scriptTag.getAttribute('data-name')) || 'Allo Support',
-    color: (scriptTag && scriptTag.getAttribute('data-color')) || '#ffffff',
-    position: (scriptTag && scriptTag.getAttribute('data-position')) || 'right',
-    launcherStyle: (scriptTag && scriptTag.getAttribute('data-launcher')) || 'icon',
-    logoUrl: (scriptTag && scriptTag.getAttribute('data-logo')) || '',
+    name: scriptTag.getAttribute('data-name') || 'Allo Support',
+    color: scriptTag.getAttribute('data-color') || '#ffffff',
+    position: scriptTag.getAttribute('data-position') || 'right',
+    launcherStyle: scriptTag.getAttribute('data-launcher') || 'icon',
+    logoUrl: scriptTag.getAttribute('data-logo') || '',
     welcomeMessage: 'Hi! How can we help you today?',
   };
 
@@ -33,7 +42,10 @@
     return html;
   }
 
-  if (document.getElementById('allo-widget-host')) return;
+  if (document.getElementById('allo-widget-host')) {
+    console.log('[Allo Widget] Already mounted, skipping');
+    return;
+  }
 
   const host = document.createElement('div');
   host.id = 'allo-widget-host';
@@ -41,6 +53,7 @@
   const mountHost = () => {
     if (document.body && !document.body.contains(host)) {
       document.body.appendChild(host);
+      console.log('[Allo Widget] Mounted to DOM');
     }
   };
 
@@ -55,8 +68,10 @@
   function connectWebSocket(id) {
     if (chatSocket || !id) return;
 
+    console.log('[Allo Widget] Connecting WebSocket:', `${WS_HOST}/ws/chat/conversation/${id}/`);
     chatSocket = new WebSocket(`${WS_HOST}/ws/chat/conversation/${id}/`);
 
+    chatSocket.onopen = () => console.log('[Allo Widget] WebSocket connected');
     chatSocket.onmessage = (e) => {
       try {
         const data = JSON.parse(e.data);
@@ -66,13 +81,18 @@
             addMessage(msg.content, msg.sender_role);
           }
         }
-      } catch (err) {}
+      } catch (err) {
+        console.error('[Allo Widget] WebSocket parse error:', err);
+      }
     };
 
     chatSocket.onclose = () => {
+      console.log('[Allo Widget] WebSocket closed, reconnecting...');
       chatSocket = null;
       setTimeout(() => connectWebSocket(id), 5000);
     };
+
+    chatSocket.onerror = (err) => console.error('[Allo Widget] WebSocket error:', err);
   }
 
   function addMessage(text, sender) {
@@ -287,8 +307,10 @@
       if (isOpen) {
         chatWindow.classList.add('open');
         chatInput.focus();
+        console.log('[Allo Widget] Chat opened');
       } else {
         chatWindow.classList.remove('open');
+        console.log('[Allo Widget] Chat closed');
       }
     };
 
@@ -300,6 +322,7 @@
       const text = chatInput.value.trim();
       if (!text) return;
 
+      console.log('[Allo Widget] Sending message:', text);
       addMessage(text, 'user');
       chatInput.value = '';
 
@@ -314,7 +337,8 @@
       sendBtn.disabled = true;
 
       try {
-        const response = await fetch(`${API_HOST}/api/chat/widget/`, {
+        console.log('[Allo Widget] Fetch:', `${API_HOST}/chat/widget/`);
+        const response = await fetch(`${API_HOST}/chat/widget/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -325,6 +349,7 @@
           }),
         });
 
+        console.log('[Allo Widget] Response status:', response.status);
         const data = await response.json();
         
         const indicator = shadow.querySelector('#typing-indicator');
@@ -339,9 +364,11 @@
             addMessage(aiMsg.content, 'ai');
           }
         } else {
+          console.error('[Allo Widget] API error:', data);
           addMessage('Sorry, something went wrong. Please try again.', 'ai');
         }
       } catch (err) {
+        console.error('[Allo Widget] Fetch error:', err);
         const indicator = shadow.querySelector('#typing-indicator');
         if (indicator) indicator.remove();
         addMessage('Unable to connect to support.', 'ai');
@@ -351,17 +378,20 @@
         chatInput.focus();
       }
     });
+
+    console.log('[Allo Widget] UI rendered');
   }
 
   renderUI();
 
   if (companyId && companyId.length > 20) {
-    fetch(`${API_HOST}/api/chat/widget-config/${companyId}/`)
+    fetch(`${API_HOST}/chat/widget-config/${companyId}/`)
       .then((res) => {
         if (!res.ok) throw new Error('Config 404');
         return res.json();
       })
       .then((data) => {
+        console.log('[Allo Widget] Config loaded:', data);
         if (data.color) config.color = data.color;
         if (data.name) config.name = data.name;
         if (data.position) config.position = data.position;
@@ -370,6 +400,6 @@
         if (data.welcome_message) config.welcomeMessage = data.welcome_message;
         renderUI();
       })
-      .catch(() => {});
+      .catch((err) => console.error('[Allo Widget] Config fetch failed:', err));
   }
 })();
