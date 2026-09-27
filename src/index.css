@@ -725,6 +725,34 @@ footer {
   right: 1rem;
 }
 
+.code-block-wrapper {
+  background: #09090b;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.code-block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.code-block-pre {
+  margin: 0;
+  padding: 1.25rem 1rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8rem;
+  color: #e4e4e7;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-x: auto;
+}
+
 .avatar {
   width: 36px;
   height: 36px;
@@ -1631,9 +1659,25 @@ footer {
   align-items: start;
 }
 
+.deploy-settings {
+  min-width: 0;
+}
+
+.launcher-buttons-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.deploy-save-btn {
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+}
+
 .widget-preview-frame {
   position: sticky;
   top: 96px;
+  min-width: 0;
 }
 
 .widget-preview-label {
@@ -1651,6 +1695,7 @@ footer {
   border-radius: 8px;
   height: 520px;
   overflow: hidden;
+  width: 100%;
 }
 
 .fake-site-nav {
@@ -1676,14 +1721,11 @@ footer {
   border-radius: 2px;
 }
 
-
-
 .widget-bubble {
   position: absolute;
   bottom: 1.25rem;
-  width: 56px;
-  height: 56px;
-  /* Removed hardcoded border-radius, it is handled in React style */
+  width: 54px;
+  height: 54px;
   border: none;
   font-size: 1.25rem;
   cursor: pointer;
@@ -1695,6 +1737,15 @@ footer {
   transition: transform 0.15s ease, border-radius 0.2s ease;
 }
 
+.widget-bubble.pos-right {
+  right: 1.25rem;
+  left: auto;
+}
+
+.widget-bubble.pos-left {
+  left: 1.25rem;
+  right: auto;
+}
 
 .widget-bubble:hover {
   transform: scale(1.05);
@@ -1702,9 +1753,11 @@ footer {
 
 .widget-window {
   position: absolute;
-  bottom: 5.5rem;
+  bottom: 5.25rem;
   width: 320px;
-  height: 400px;
+  max-width: calc(100% - 2.5rem);
+  height: 380px;
+  max-height: calc(100% - 6.5rem);
   background: #0a0a0a;
   border: 1px solid var(--border-color);
   border-radius: 12px;
@@ -1716,12 +1769,22 @@ footer {
   animation: slideUp 0.2s ease;
 }
 
+.widget-window.pos-right {
+  right: 1.25rem;
+  left: auto;
+}
+
+.widget-window.pos-left {
+  left: 1.25rem;
+  right: auto;
+}
+
 .widget-window-header {
-  padding: 1rem 1.1rem;
+  padding: 0.85rem 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
 }
 
 .widget-window-body {
@@ -2107,12 +2170,34 @@ footer {
     padding: 1.25rem;
   }
 
+  .widget-bubble {
+    width: 48px;
+    height: 48px;
+    bottom: 0.85rem;
+  }
+
+  .widget-bubble.pos-right {
+    right: 0.85rem;
+  }
+
+  .widget-bubble.pos-left {
+    left: 0.85rem;
+  }
+
   .widget-window {
-    width: calc(100% - 2rem);
-    height: 350px;
-    right: 1rem;
-    left: 1rem;
-    bottom: 5rem;
+    width: calc(100% - 1.7rem);
+    max-width: calc(100% - 1.7rem);
+    height: 340px;
+    max-height: calc(100% - 5rem);
+    bottom: 4.5rem;
+  }
+
+  .widget-window.pos-right {
+    right: 0.85rem;
+  }
+
+  .widget-window.pos-left {
+    left: 0.85rem;
   }
 }
 
@@ -2136,6 +2221,11 @@ footer {
   }
 
   .modal-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .deploy-save-btn {
     width: 100%;
     justify-content: center;
   }
@@ -2193,12 +2283,9 @@ footer {
     right: 0.75rem;
   }
 
-  /* Sticky widgets & bubbles spacing adjustments */
-  .widget-bubble {
-    right: 1rem !important;
-    bottom: 1rem !important;
-    width: 48px;
-    height: 48px;
+  .launcher-buttons-row {
+    grid-template-columns: 1fr;
+    gap: 0.4rem;
   }
 
   /* Form Elements standard size overrides for iOS system zooming mitigation */
