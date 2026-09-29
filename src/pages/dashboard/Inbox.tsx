@@ -23,6 +23,16 @@ type Conversation = {
   messages?: Message[];
 };
 
+// Helper: Dynamically get WS host matching current environment (Railway vs Local)
+function getWebSocketBaseUrl(): string {
+  if (import.meta.env.VITE_WS_URL) {
+    return import.meta.env.VITE_WS_URL;
+  }
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+  const cleanApi = apiUrl.replace(/\/api\/?$/, '');
+  return cleanApi.replace(/^https:\/\//, 'wss://').replace(/^http:\/\//, 'ws://');
+}
+
 function renderFormattedMessage(text: string) {
   if (!text) return null;
 
@@ -53,7 +63,7 @@ function renderFormattedMessage(text: string) {
             border: '1px solid var(--border-color)',
             display: 'block',
             objectFit: 'contain',
-            background: '#111',
+            background: 'var(--card-bg)',
           }}
           onError={(e) => {
             (e.target as HTMLImageElement).style.display = 'none';
@@ -146,76 +156,95 @@ export default function Inbox() {
     }
   };
 
+  // 1. Connect to Company Dashboard Global Alert Channel
   useEffect(() => {
     fetchThreads();
 
     const currentUser = getUser();
     if (!currentUser || !currentUser.company_id) return;
 
-    // Use WebSocket scheme and host dynamically
-    const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsBase = import.meta.env.VITE_WS_URL || `${wsProto}//localhost:8000`;
+    const wsBase = getWebSocketBaseUrl();
     const wsUrl = `${wsBase}/ws/dash/company/${currentUser.company_id}/`;
-    const dashSocket = new WebSocket(wsUrl);
+    console.log('[Dashboard Inbox] Connecting alert socket:', wsUrl);
 
-    dashSocket.onmessage = (e) => {
-      const data = JSON.parse(e.data);
-      if (data.type === 'handoff_alert') {
-        setThreads((prevThreads) => {
-          const filtered = prevThreads.filter((t) => t.id !== data.conversation_id);
-          const updatedThread: Conversation = {
-            id: data.conversation_id,
-            visitor_identifier: data.visitor_identifier,
-            visitor_lang: 'en',
-            status: data.status,
-            preview_text: data.preview_text,
-            updated_at: data.updated_at,
-          };
-          return [updatedThread, ...filtered];
-        });
+    let dashSocket: WebSocket | null = null;
 
-        if (data.status === 'human') {
-          playAlertSound();
+    try {
+      dashSocket = new WebSocket(wsUrl);
+
+      dashSocket.onmessage = (e) => {
+        const data = JSON.parse(e.data);
+        if (data.type === 'handoff_alert') {
+          setThreads((prevThreads) => {
+            const filtered = prevThreads.filter((t) => t.id !== data.conversation_id);
+            const updatedThread: Conversation = {
+              id: data.conversation_id,
+              visitor_identifier: data.visitor_identifier,
+              visitor_lang: 'en',
+              status: data.status,
+              preview_text: data.preview_text,
+              updated_at: data.updated_at,
+            };
+            return [updatedThread, ...filtered];
+          });
+
+          if (data.status === 'human') {
+            playAlertSound();
+          }
         }
-      }
-    };
+      };
+    } catch (err) {
+      console.error('[Dashboard Inbox] Alert socket error:', err);
+    }
 
     return () => {
-      dashSocket.close();
+      if (dashSocket) dashSocket.close();
     };
   }, []);
 
   useEffect(() => {
-    if (!activeId) {
+    if (activeId) {
+      fetchThreadDetails(activeId);
+    } else {
       setActiveThread(null);
-      return;
+    }
+  }, [activeId]);
+
+  // 2. Connect to Active Conversation Live Stream
+  useEffect(() => {
+    if (!activeId) return;
+
+    const wsBase = getWebSocketBaseUrl();
+    const wsUrl = `${wsBase}/ws/chat/conversation/${activeId}/`;
+    console.log('[Dashboard Inbox] Connecting chat socket:', wsUrl);
+
+    let chatSocket: WebSocket | null = null;
+
+    try {
+      chatSocket = new WebSocket(wsUrl);
+
+      chatSocket.onmessage = (e) => {
+        const data = JSON.parse(e.data);
+        if (data.type === 'chat_message') {
+          const newMsg: Message = data.message;
+          setActiveThread((prev) => {
+            if (!prev || prev.id !== activeId) return prev;
+            const exists = prev.messages?.some((m) => m.id === newMsg.id);
+            if (exists) return prev;
+
+            return {
+              ...prev,
+              messages: [...(prev.messages || []), newMsg],
+            };
+          });
+        }
+      };
+    } catch (err) {
+      console.error('[Dashboard Inbox] Chat socket error:', err);
     }
 
-    fetchThreadDetails(activeId);
-
-    const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsBase = import.meta.env.VITE_WS_URL || `${wsProto}//localhost:8000`;
-    const chatSocket = new WebSocket(`${wsBase}/ws/chat/conversation/${activeId}/`);
-
-    chatSocket.onmessage = (e) => {
-      const data = JSON.parse(e.data);
-      if (data.type === 'chat_message') {
-        const newMsg: Message = data.message;
-        setActiveThread((prev) => {
-          if (!prev || prev.id !== activeId) return prev;
-          const exists = prev.messages?.some((m) => m.id === newMsg.id);
-          if (exists) return prev;
-
-          return {
-            ...prev,
-            messages: [...(prev.messages || []), newMsg],
-          };
-        });
-      }
-    };
-
     return () => {
-      chatSocket.close();
+      if (chatSocket) chatSocket.close();
     };
   }, [activeId]);
 
@@ -390,15 +419,14 @@ export default function Inbox() {
                     })}
                   </div>
 
-                  <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--border-color)', background: '#0a0a0a' }}>
-                    <form style={{ display: 'flex', gap: '0.75rem' }} onSubmit={sendReply}>
+                  <div className="inbox-reply">
+                    <form style={{ display: 'flex', gap: '0.75rem', width: '100%' }} onSubmit={sendReply}>
                       <input
                         className="form-input"
                         placeholder={t('inbox.placeholder')}
                         value={reply}
                         onChange={(e) => setReply(e.target.value)}
                         disabled={sending || activeThread.status === 'resolved'}
-                        style={{ background: '#000' }}
                       />
                       <button type="submit" className="btn btn-primary" disabled={sending || activeThread.status === 'resolved'}>
                         {sending ? 'Sending…' : t('inbox.send')}

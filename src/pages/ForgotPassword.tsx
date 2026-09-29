@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { apiRequest } from '../lib/api';
 import LangSelect from '../components/LangSelect';
+import ThemeToggle from '../components/ThemeToggle';
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
@@ -48,7 +49,10 @@ export default function ForgotPassword() {
           >
             <ArrowLeft size={16} /> Back to Log In
           </Link>
-          <LangSelect compact />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <ThemeToggle compact />
+            <LangSelect compact />
+          </div>
         </div>
         <Link to="/" className="logo-text" style={{ fontSize: '3rem', marginBottom: '1.5rem', display: 'inline-block' }}>
           Allo

@@ -5,6 +5,7 @@ import { apiRequest, setTokens } from '../lib/api';
 import { setUser } from '../lib/auth';
 import { useTranslation } from '../lib/i18n';
 import LangSelect from '../components/LangSelect';
+import ThemeToggle from '../components/ThemeToggle';
 
 export default function Login() {
   const { t } = useTranslation();
@@ -58,7 +59,10 @@ export default function Login() {
           >
             <ArrowLeft size={16} /> Back to home
           </Link>
-          <LangSelect compact />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <ThemeToggle compact />
+            <LangSelect compact />
+          </div>
         </div>
         <Link to="/" className="logo-text" style={{ fontSize: '3rem', marginBottom: '1.5rem', display: 'inline-block' }}>
           Allo

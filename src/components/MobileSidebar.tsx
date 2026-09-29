@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { LogOut, type LucideIcon } from 'lucide-react';
 import { useTranslation } from '../lib/i18n';
 import LangSelect from './LangSelect';
+import ThemeToggle from './ThemeToggle';
 
 export interface NavItem {
   to: string;
@@ -70,10 +71,18 @@ export default function MobileSidebar({
           ))}
         </nav>
 
-        {/* Language Picker */}
+        {/* Preferences: Language & Theme */}
         <div className="mobile-nav-below-section">
-          <div className="mobile-nav-below-title">{t('dash.language')}</div>
-          <LangSelect compact={false} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div className="mobile-nav-below-title">{t('dash.language')}</div>
+              <LangSelect compact={false} />
+            </div>
+            <div>
+              <div className="mobile-nav-below-title">Theme</div>
+              <ThemeToggle />
+            </div>
+          </div>
         </div>
 
         {/* Plan Usage Meter */}
@@ -81,20 +90,20 @@ export default function MobileSidebar({
           {billing ? (
             <div className="mobile-nav-below-plan">
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '0.35rem' }}>
-                <span style={{ textTransform: 'capitalize', fontWeight: 600, color: '#fff' }}>
+                <span style={{ textTransform: 'capitalize', fontWeight: 600, color: 'var(--text-primary)' }}>
                   {billing.plan} Plan
                 </span>
                 <span style={{ color: 'var(--text-secondary)' }}>
                   {billing.message_usage.toLocaleString()} / {billing.message_limit.toLocaleString()}
                 </span>
               </div>
-              <div style={{ height: '4px', background: 'rgba(255, 255, 255, 0.08)', borderRadius: '2px', overflow: 'hidden' }}>
+              <div style={{ height: '4px', background: 'var(--meter-bg)', borderRadius: '2px', overflow: 'hidden' }}>
                 <div
                   style={{
                     height: '100%',
                     width: `${Math.min(billing.usage_percentage, 100)}%`,
                     background:
-                      billing.message_usage >= billing.message_limit ? '#ef4444' : '#ffffff',
+                      billing.message_usage >= billing.message_limit ? '#ef4444' : 'var(--meter-fill)',
                     transition: 'width 0.3s ease',
                   }}
                 />
